@@ -9,8 +9,7 @@ import java.io.IOException;
 
 public class VarIntUtils {
 
-    @SneakyThrows
-    public static int readVarInt(@NotNull DataInputStream dataInputStream) {
+    public static int readVarInt(@NotNull DataInputStream dataInputStream) throws IOException {
         int value = 0, length = 0;
         byte current;
 
