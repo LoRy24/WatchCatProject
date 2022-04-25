@@ -63,10 +63,7 @@ public class WatchCatProxy extends CatProxyServer implements Runnable {
                     Socket newConnection = this.serverSocket.accept();
 
                     // Check if the connection is blocked
-                    if (this.blockedAddresses.contains(newConnection.getInetAddress())) {
-                        newConnection.close();
-                        continue;
-                    }
+                    if (this.blockedAddresses.contains(newConnection.getInetAddress())) { newConnection.close(); continue; }
 
                     this.processConnection(newConnection);
                 } catch (IOException e) {
