@@ -45,10 +45,10 @@ public class WatchCatProxy extends CatProxyServer implements Runnable {
         try {
             // Load the logger
             logger = new Logger(Logger.generateLoggerLogFile(), "WatchCat");
-            getLogger().log(LogLevel.SUCCESS, "Logger enabled!");
+            getLogger().log(LogLevel.INFO, "Logger enabled!");
             // Instance the events manager
             this.eventsManager = new CatEventsManager();
-            getLogger().log(LogLevel.SUCCESS, "Events manager has been instanced! Loading plugins...");
+            getLogger().log(LogLevel.INFO, "Events manager has been instanced! Loading plugins...");
             // Start the server-socket and finish starting the server
             startServerSocket();
         } catch (Exception e) {
