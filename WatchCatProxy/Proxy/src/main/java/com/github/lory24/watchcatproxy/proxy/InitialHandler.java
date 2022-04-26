@@ -1,14 +1,16 @@
 package com.github.lory24.watchcatproxy.proxy;
 
 import com.github.lory24.watchcatproxy.api.CatProxyServer;
+import com.github.lory24.watchcatproxy.api.events.defaults.HandshakeReceivedEvent;
 import com.github.lory24.watchcatproxy.api.logging.LogLevel;
 import com.github.lory24.watchcatproxy.api.results.HandshakeResult;
-import com.github.lory24.watchcatproxy.protocol.PacketBuffer;
-import com.github.lory24.watchcatproxy.protocol.VarIntUtils;
+import com.github.lory24.watchcatproxy.protocol.*;
+import com.github.lory24.watchcatproxy.protocol.packets.HandshakePacket;
 import lombok.Getter;
 
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.Socket;
 
 public class InitialHandler {
@@ -30,14 +32,18 @@ public class InitialHandler {
         this.socket = socket;
     }
 
-    public void process() {
+    public void process()
+            throws BufferTypeException, InvocationTargetException, IllegalAccessException,
+            ReadExploitException {
         // Process the handshake state
         if (processHandshake() == -1) {
             return;
         }
     }
 
-    private int processHandshake() {
+    private int processHandshake()
+            throws InvocationTargetException,
+            IllegalAccessException, ReadExploitException {
         // Read the handshake packet
         PacketBuffer handshakeBuffer = secureReadPacketBuffer();
 
@@ -45,7 +51,24 @@ public class InitialHandler {
         if (handshakeBuffer == null) { disconnectNoPlayerMessage("Invalid Handshake procedure!"); return -1; }
 
         // Read the HandshakePacket and put the data into an object
-        // TODO
+        HandshakePacket handshakePacket = new HandshakePacket();
+        handshakePacket.readData(handshakeBuffer);
+        this.handshakeResult = new HandshakeResult(handshakePacket.getProtocolVersion(), handshakePacket.getServerAddress(), handshakePacket.getPort(),
+                HandshakeResult.HandshakeNextState.convertIntegerToState(handshakePacket.getNextState()));
+
+        // Check for exploited packet
+        ExploitUtils.checkBufferExploits(handshakeBuffer);
+
+        // Fire the handshake event
+        boolean cancelled = CatProxyServer.getInstance().getEventsManager().fireEvent(HandshakeReceivedEvent.class,
+                new HandshakeReceivedEvent(handshakeResult, this.socket.getInetAddress())
+        );
+
+        // If cancelled, exit with error code -1
+        if (cancelled) {
+            disconnectNoPlayerMessage("Handshake event cancelled");
+            return -1;
+        }
 
         return 0;
     }
