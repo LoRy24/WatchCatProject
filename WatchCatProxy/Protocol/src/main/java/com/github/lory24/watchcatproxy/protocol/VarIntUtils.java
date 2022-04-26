@@ -1,6 +1,5 @@
 package com.github.lory24.watchcatproxy.protocol;
 
-import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInputStream;
