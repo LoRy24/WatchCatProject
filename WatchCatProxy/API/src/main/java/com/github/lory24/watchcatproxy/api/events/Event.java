@@ -10,9 +10,4 @@ public abstract class Event {
      */
     @Getter @Setter
     private boolean cancelled;
-
-    /**
-     * All the default actions that will be executed then the event is fired, and it's not cancelled.
-     */
-    public abstract void onEvent();
 }

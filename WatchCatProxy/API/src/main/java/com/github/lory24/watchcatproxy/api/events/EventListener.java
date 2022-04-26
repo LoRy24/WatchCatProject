@@ -1,13 +1,17 @@
 package com.github.lory24.watchcatproxy.api.events;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+
 /**
  * This annotation is used to determinate which function is used to execute an event
  */
+@Retention(RetentionPolicy.RUNTIME)
 public @interface EventListener {
 
     /**
      * This value is used to determinate if the function will be executed also if the event has been cancelled. It's
-     * default value is true, so when the event is cancelled, the function will be executed.
+     * default value is true, so also when the event is cancelled, the function will be executed.
      * @return If the function ignore the cancelled state
      */
     boolean ignoreCancelled() default true;

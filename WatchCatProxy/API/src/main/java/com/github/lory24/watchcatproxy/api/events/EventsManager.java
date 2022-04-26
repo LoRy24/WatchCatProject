@@ -2,19 +2,9 @@ package com.github.lory24.watchcatproxy.api.events;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.reflect.InvocationTargetException;
+
 public abstract class EventsManager {
-
-    /**
-     * This function will register an event.
-     * @param event The event
-     */
-    public abstract void registerEvent(@NotNull final Class<? extends Event> event);
-
-    /**
-     * This function will be used to unregister an event.
-     * @param event The event
-     */
-    public abstract void unregisterEvent(@NotNull final Class<? extends Event> event);
 
     /**
      * This function will register an event listener.
@@ -30,8 +20,11 @@ public abstract class EventsManager {
 
     /**
      * This function will fire an event.
+     *
+     * @param clazz The class of the event. Used to
      * @param event This param has two functionalities: The first is to define the event that will be fired, and the
      *              second is to give at the listener functions an object to works with.
+     * @return if the event is cancelled
      */
-    public abstract void fireEvent(final Event event);
+    public abstract boolean fireEvent(Class<? extends Event> clazz, Event event) throws InvocationTargetException, IllegalAccessException;
 }
