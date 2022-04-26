@@ -1,4 +1,4 @@
-package com.github.lory24.watchcatproxy.proxy;
+package com.github.lory24.watchcatproxy.proxy.managers;
 
 import com.github.lory24.watchcatproxy.api.events.Event;
 import com.github.lory24.watchcatproxy.api.events.EventListener;

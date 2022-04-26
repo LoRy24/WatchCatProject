@@ -6,6 +6,7 @@ import com.github.lory24.watchcatproxy.api.logging.LogLevel;
 import com.github.lory24.watchcatproxy.api.logging.Logger;
 import com.github.lory24.watchcatproxy.protocol.BufferTypeException;
 import com.github.lory24.watchcatproxy.protocol.ReadExploitException;
+import com.github.lory24.watchcatproxy.proxy.managers.CatEventsManager;
 import lombok.Getter;
 
 import java.io.IOException;
@@ -49,6 +50,8 @@ public class WatchCatProxy extends CatProxyServer implements Runnable {
             // Instance the events manager
             this.eventsManager = new CatEventsManager();
             getLogger().log(LogLevel.INFO, "Events manager has been instanced! Loading plugins...");
+            // Load the plugins
+
             // Start the server-socket and finish starting the server
             startServerSocket();
         } catch (Exception e) {
