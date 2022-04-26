@@ -53,7 +53,6 @@ public class WatchCatProxy extends CatProxyServer implements Runnable {
             this.serverSocket = new ServerSocket(this.port);
             // Start the events manager
             this.eventsManager = new CatEventsManager();
-            this.eventsManager.registerEvents(new TestListener());
             // Start listening
             listening();
         } catch (IOException e) {
@@ -97,8 +96,10 @@ public class WatchCatProxy extends CatProxyServer implements Runnable {
             } catch (IOException | BufferTypeException |
                      InvocationTargetException | IllegalAccessException e) {
                 this.logError(e.getMessage());
-            } catch (ReadExploitException e) { // Fix exploit
+            }
+            catch (ReadExploitException e) { // Fix exploit
                 try {
+                    getLogger().log(LogLevel.WARNING, "The connection from " + conn.getInetAddress().getHostAddress() + " has been closed to prevent a server crash!");
                     conn.close();
                 } catch (IOException ex) {
                     logError(ex.getMessage());
