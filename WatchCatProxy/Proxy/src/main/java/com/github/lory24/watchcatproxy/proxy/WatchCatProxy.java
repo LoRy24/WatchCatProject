@@ -1,10 +1,14 @@
 package com.github.lory24.watchcatproxy.proxy;
 
 import com.github.lory24.watchcatproxy.api.CatProxyServer;
+import com.github.lory24.watchcatproxy.api.events.EventsManager;
 import com.github.lory24.watchcatproxy.api.logging.LogLevel;
 import com.github.lory24.watchcatproxy.api.logging.Logger;
+import com.github.lory24.watchcatproxy.protocol.BufferTypeException;
+import com.github.lory24.watchcatproxy.protocol.ReadExploitException;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +30,7 @@ public class WatchCatProxy extends CatProxyServer implements Runnable {
     // Server Objects
     private Logger logger;
     private ServerState state;
+    private CatEventsManager eventsManager;
 
     {
         this.state = ServerState.STARTING;
@@ -46,6 +51,9 @@ public class WatchCatProxy extends CatProxyServer implements Runnable {
         try {
             // Create the server
             this.serverSocket = new ServerSocket(this.port);
+            // Start the events manager
+            this.eventsManager = new CatEventsManager();
+            this.eventsManager.registerEvents(new TestListener());
             // Start listening
             listening();
         } catch (IOException e) {
@@ -86,14 +94,26 @@ public class WatchCatProxy extends CatProxyServer implements Runnable {
                     getLogger().log(LogLevel.WARNING, "Connection at " + conn.getInetAddress().getHostAddress() + " has disconnected: "
                             + initialHandler.getDisconnectReason());
                 }
-            } catch (IOException e) {
+            } catch (IOException | BufferTypeException |
+                     InvocationTargetException | IllegalAccessException e) {
                 this.logError(e.getMessage());
+            } catch (ReadExploitException e) { // Fix exploit
+                try {
+                    conn.close();
+                } catch (IOException ex) {
+                    logError(ex.getMessage());
+                }
             }
         }).start();
     }
 
     private void logError(String message) {
         getLogger().log(LogLevel.ERROR, "An error has occurred: " + message);
+    }
+
+    @Override
+    public EventsManager getEventsManager() {
+        return this.eventsManager;
     }
 
     @Override
