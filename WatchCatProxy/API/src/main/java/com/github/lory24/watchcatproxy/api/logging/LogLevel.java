@@ -15,7 +15,7 @@ public enum LogLevel {
      * When the log is an information (like a normal message)
      * Color: BLUE
      */
-    INFO("\u001B[34m"),
+    INFO("\u001B[36m"),
 
     /**
      * When the log is a warning (for example something has not loaded correctly)
