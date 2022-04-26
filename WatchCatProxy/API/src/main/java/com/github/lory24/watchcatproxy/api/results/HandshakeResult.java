@@ -13,14 +13,14 @@ import lombok.Getter;
  *                        class it's represented by an enum.
  */
 public record HandshakeResult(@Getter int protocolVersion, @Getter String serverAddress,
-                              @Getter @Unsigned short serverPort,
+                              @Getter @Unsigned int serverPort,
                               @Getter com.github.lory24.watchcatproxy.api.results.HandshakeResult.HandshakeNextState nextState) {
 
     /**
      * The handshake net state enum. This will be used when instancing the nextState object in the HandshakeResult
      * class.
      */
-    protected enum HandshakeNextState {
+    public enum HandshakeNextState {
 
         /**
          * In the Minecraft protocol, this value is represented by the number 0x02
@@ -45,6 +45,14 @@ public record HandshakeResult(@Getter int protocolVersion, @Getter String server
          */
         HandshakeNextState(int value) {
             this.value = value;
+        }
+
+        /**
+         * Convert a next state code (the number) to its enum value
+         * @param i The number
+         */
+        public static HandshakeNextState convertIntegerToState(int i) {
+            return i == 1 ? HandshakeResult.HandshakeNextState.STATUS : HandshakeResult.HandshakeNextState.LOGIN;
         }
     }
 
