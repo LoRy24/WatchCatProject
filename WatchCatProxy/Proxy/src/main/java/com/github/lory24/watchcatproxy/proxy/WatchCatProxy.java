@@ -6,6 +6,7 @@ import com.github.lory24.watchcatproxy.api.logging.LogLevel;
 import com.github.lory24.watchcatproxy.api.logging.Logger;
 import com.github.lory24.watchcatproxy.protocol.BufferTypeException;
 import com.github.lory24.watchcatproxy.protocol.ReadExploitException;
+import lombok.Getter;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -19,6 +20,9 @@ public class WatchCatProxy extends CatProxyServer implements Runnable {
     // Configuration final fields (internal configuration values)
     private final String version = "1.0-SNAPSHOT";
     private final int port = 25565;
+
+    @Getter
+    private final boolean onlineMode = false; // Not implemented
 
     // Security stuff
     @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
@@ -39,10 +43,15 @@ public class WatchCatProxy extends CatProxyServer implements Runnable {
     @Override
     public void run() {
         try {
+            // Load the logger
             logger = new Logger(Logger.generateLoggerLogFile(), "WatchCat");
+            getLogger().log(LogLevel.SUCCESS, "Logger enabled!");
+            // Instance the events manager
+            this.eventsManager = new CatEventsManager();
+            getLogger().log(LogLevel.SUCCESS, "Events manager has been instanced! Loading plugins...");
             // Start the server-socket and finish starting the server
             startServerSocket();
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -51,8 +60,6 @@ public class WatchCatProxy extends CatProxyServer implements Runnable {
         try {
             // Create the server
             this.serverSocket = new ServerSocket(this.port);
-            // Start the events manager
-            this.eventsManager = new CatEventsManager();
             // Start listening
             listening();
         } catch (IOException e) {
