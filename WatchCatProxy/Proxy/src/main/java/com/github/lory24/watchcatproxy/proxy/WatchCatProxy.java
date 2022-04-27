@@ -4,12 +4,16 @@ import com.github.lory24.watchcatproxy.api.CatProxyServer;
 import com.github.lory24.watchcatproxy.api.events.EventsManager;
 import com.github.lory24.watchcatproxy.api.logging.LogLevel;
 import com.github.lory24.watchcatproxy.api.logging.Logger;
+import com.github.lory24.watchcatproxy.api.plugin.PluginNotLoadedException;
+import com.github.lory24.watchcatproxy.api.plugin.PluginsManager;
 import com.github.lory24.watchcatproxy.protocol.BufferTypeException;
 import com.github.lory24.watchcatproxy.protocol.ReadExploitException;
 import com.github.lory24.watchcatproxy.proxy.managers.CatEventsManager;
+import com.github.lory24.watchcatproxy.proxy.managers.CatPluginsManager;
 import lombok.Getter;
+import org.json.JSONObject;
 
-import java.io.IOException;
+import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.net.*;
 import java.util.ArrayList;
@@ -18,12 +22,13 @@ import java.util.List;
 @SuppressWarnings("FieldCanBeLocal")
 public class WatchCatProxy extends CatProxyServer implements Runnable {
 
-    // Configuration final fields (internal configuration values)
-    private final String version = "1.0-SNAPSHOT";
-    private final int port = 25565;
-
+    // Server properties file
     @Getter
-    private final boolean onlineMode = false; // Not implemented
+    private File serverProperties;
+
+    // Server properties JSON
+    @Getter
+    private String serverPropertiesJSON;
 
     // Security stuff
     @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
@@ -36,6 +41,7 @@ public class WatchCatProxy extends CatProxyServer implements Runnable {
     private Logger logger;
     private ServerState state;
     private CatEventsManager eventsManager;
+    private CatPluginsManager pluginsManager;
 
     {
         this.state = ServerState.STARTING;
@@ -47,22 +53,46 @@ public class WatchCatProxy extends CatProxyServer implements Runnable {
             // Load the logger
             logger = new Logger(Logger.generateLoggerLogFile(), "WatchCat");
             getLogger().log(LogLevel.INFO, "Logger enabled!");
+
+            // Load server properties
+            this.serverProperties = new File("server-properties.json");
+            this.loadServerPropertiesFile();
+            this.serverPropertiesJSON = ServerProperties.loadFileContent(this.serverProperties);
+
             // Instance the events manager
             this.eventsManager = new CatEventsManager();
             getLogger().log(LogLevel.INFO, "Events manager has been instanced! Loading plugins...");
+
             // Load the plugins
+            this.pluginsManager = new CatPluginsManager(this);
+            this.pluginsManager.setup();
 
             // Start the server-socket and finish starting the server
             startServerSocket();
-        } catch (Exception e) {
+
+        } catch (IOException e) {
             e.printStackTrace();
+        } catch (URISyntaxException | ClassNotFoundException e) { // Logger managed exception
+            logError(e.getMessage());
+        }
+    }
+
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    private void loadServerPropertiesFile() throws IOException {
+        if (!serverProperties.exists()) {
+            serverProperties.createNewFile();
+            FileOutputStream fileOutputStream = new FileOutputStream(serverProperties);
+            InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream("server-properties.json");
+            assert inputStream != null;
+            fileOutputStream.write(inputStream.readAllBytes());
+            fileOutputStream.flush();fileOutputStream.close();
         }
     }
 
     private void startServerSocket() {
         try {
             // Create the server
-            this.serverSocket = new ServerSocket(this.port);
+            this.serverSocket = new ServerSocket((int) ServerProperties.port.get(new JSONObject(this.serverPropertiesJSON)));
             // Start listening
             listening();
         } catch (IOException e) {
@@ -129,11 +159,17 @@ public class WatchCatProxy extends CatProxyServer implements Runnable {
 
     @Override
     public String getVersion() {
-        return this.version;
+        return (String) ServerProperties.port.get(new JSONObject(this.serverPropertiesJSON)
+                .getJSONObject("version"));
     }
 
     @Override
     public Logger getLogger() {
         return this.logger;
+    }
+
+    @Override
+    public PluginsManager getPluginsManager() {
+        return this.pluginsManager;
     }
 }

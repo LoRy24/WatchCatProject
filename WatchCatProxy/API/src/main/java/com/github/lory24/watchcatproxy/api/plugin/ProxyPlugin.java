@@ -43,7 +43,7 @@ public class ProxyPlugin {
      * into square brackets ("[]").
      */
     public void log(LogLevel level, String message) {
-        CatProxyServer.getInstance().getLogger().log(level, "[ " + this.description.getName() + " ]" + message);
+        CatProxyServer.getInstance().getLogger().log(level, "[" + this.description.getName() + "] " + message);
     }
 
     /**
