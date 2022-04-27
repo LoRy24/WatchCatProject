@@ -1,0 +1,17 @@
+{
+  "version": {
+    "serverVersion": "&dWatchCat Proxy",
+    "protocolVersion": 47
+  },
+  "players": {
+    "maxPlayers": 100,
+    "fakeOnline": {
+      "enabled": false,
+      "value": 99
+    }
+  },
+  "port": 25565,
+  "serverName": "WatchCat Proxy Server",
+  "serverMessageOfTheDay": "&dMeow! &fA WatchCat proxy server.",
+  "serverIconName": "default-icon.png"
+}
