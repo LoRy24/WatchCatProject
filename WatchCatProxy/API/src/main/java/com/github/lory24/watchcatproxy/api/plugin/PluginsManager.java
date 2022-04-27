@@ -4,6 +4,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.net.URISyntaxException;
 
 public abstract class PluginsManager {
 
@@ -17,7 +19,7 @@ public abstract class PluginsManager {
      * @throws IOException When there is a problem with the jar file loading (Internal error)
      * @throws ClassNotFoundException Another internal error exception
      */
-    public abstract void enablePlugin(@NotNull File file) throws PluginNotLoadedException, IOException, ClassNotFoundException;
+    public abstract void enablePlugin(@NotNull File file) throws PluginNotLoadedException, IOException, ClassNotFoundException, URISyntaxException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException;
 
     /**
      * Unload a plugin by his name. The plugin will be unloaded with all his classes and resources from the server.
@@ -30,4 +32,10 @@ public abstract class PluginsManager {
      * @param pluginName The name of the plugin
      */
     public abstract ProxyPlugin getProxyPlugin(String pluginName);
+
+    /**
+     * Return the plugins' folder file. This will be used to get the plugin's data folder.
+     * @return The plugins folder
+     */
+    public abstract File getPluginsFolder();
 }

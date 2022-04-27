@@ -4,6 +4,8 @@ import com.github.lory24.watchcatproxy.api.CatProxyServer;
 import com.github.lory24.watchcatproxy.api.logging.LogLevel;
 import lombok.Getter;
 
+import java.io.File;
+
 public class ProxyPlugin {
 
     /**
@@ -18,6 +20,11 @@ public class ProxyPlugin {
      */
     @Getter
     private PluginDescription description;
+
+    /**
+     * The plugin's file. Private access
+     */
+    private File pluginFile;
 
     /**
      * Function called when the server enables the plugin
@@ -45,8 +52,17 @@ public class ProxyPlugin {
      * @param proxyServer The instanced Proxy server
      * @param description The plugin description object. Created when loaded the jar file
      */
-    public void initialize(CatProxyServer proxyServer, PluginDescription description) {
+    public void initialize(CatProxyServer proxyServer, PluginDescription description, File pluginFile) {
         this.proxyServer = proxyServer;
         this.description = description;
+        this.pluginFile  =  pluginFile;
+    }
+
+    /**
+     * Get the plugin's data folder. In this folder the plugin can put databases, config files etc.
+     * @return The data folder file.
+     */
+    public File getDataFolder() {
+        return new File(pluginFile.getParent(), this.getDescription().getName());
     }
 }
