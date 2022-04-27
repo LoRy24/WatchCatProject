@@ -6,6 +6,7 @@ import com.github.lory24.watchcatproxy.api.plugin.PluginDescription;
 import com.github.lory24.watchcatproxy.api.plugin.PluginNotLoadedException;
 import com.github.lory24.watchcatproxy.api.plugin.PluginsManager;
 import com.github.lory24.watchcatproxy.api.plugin.ProxyPlugin;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONObject;
 
@@ -92,6 +93,7 @@ public class CatPluginsManager extends PluginsManager {
 
     // DANGEROUS FUNCTIONS. ONLY EXECUTED FROM CLASS INTERNAL FUNCTIONS
 
+    // TODO OPTIMIZE THIS
     @NotNull
     private PluginDescription loadPluginThings(@NotNull File file)
             throws IOException, ClassNotFoundException, URISyntaxException,
@@ -121,10 +123,10 @@ public class CatPluginsManager extends PluginsManager {
             if (entry.isDirectory()) continue;
             if (entry.getName().endsWith(".class")) {
                 // Load the class
-                String className = entry.getName().substring(0, entry.getName().length() - 6);
-                className = className.replace('/', '.');
+                String className = entry.getName().substring(0, entry.getName().length() - 6).replace('/', '.');
                 Class<?> clazz = urlClassLoader.loadClass(className);
                 classes.add(clazz);
+
                 if (!className.equals(mainClassPath)) continue;
                 try {
                     plugin = (ProxyPlugin) clazz.getConstructor().newInstance();
@@ -135,8 +137,7 @@ public class CatPluginsManager extends PluginsManager {
             }
         }
 
-        if (plugin == null)
-            fireClassLoadingErrorException(file);
+        if (plugin == null) fireClassLoadingErrorException(file);
 
         // Put all the values and return
         String name = pluginDescription.getName();
@@ -149,7 +150,9 @@ public class CatPluginsManager extends PluginsManager {
         return false;
     }
 
-    private void fireClassLoadingErrorException(File file) throws PluginNotLoadedException {
+    @Contract("_ -> fail")
+    private void fireClassLoadingErrorException(@NotNull File file)
+            throws PluginNotLoadedException {
         throw new PluginNotLoadedException("Error while loading the main class of " + file.getName() + ".");
     }
 }
