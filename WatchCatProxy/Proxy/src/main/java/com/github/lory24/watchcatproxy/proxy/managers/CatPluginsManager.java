@@ -94,30 +94,24 @@ public class CatPluginsManager extends PluginsManager {
     // DANGEROUS FUNCTIONS. ONLY EXECUTED FROM CLASS INTERNAL FUNCTIONS
 
     // TODO OPTIMIZE THIS
+    @SuppressWarnings("resource")
     @NotNull
     private PluginDescription loadPluginThings(@NotNull File file)
             throws IOException, ClassNotFoundException, URISyntaxException,
             PluginNotLoadedException {
 
         JarFile jarFile = new JarFile(file.getAbsoluteFile());
-        Enumeration<JarEntry> jarFileEntries = jarFile.entries();
-        URLClassLoader urlClassLoader =
-                URLClassLoader.newInstance(new URL[]{new URL("jar:file:" + file.getAbsolutePath() + "!/")});
+        URLClassLoader urlClassLoader = URLClassLoader.newInstance(new URL[]{new URL("jar:file:" + file.getAbsolutePath() + "!/")});
 
         // Load the plugin.json file
-        InputStream pluginJSONInputStream = urlClassLoader.getResourceAsStream("plugin.json");
-        if (pluginJSONInputStream == null)
-            throw new PluginNotLoadedException("Error while loading " + file.getName() + ". Is that a plugin?");
-
-        JSONObject pluginJSON = new JSONObject(new String(pluginJSONInputStream.readAllBytes()));
-        pluginJSONInputStream.close();
-        PluginDescription pluginDescription = new PluginDescription(pluginJSON.getString("name"), pluginJSON.getString("version"), pluginJSON.getString("author"));
+        PluginDescription pluginDescription = this.getDescriptionFromPluginJSON(urlClassLoader, file);
 
         // List of all the classes
         List<Class<?>> classes = new ArrayList<>();
-        String mainClassPath = pluginJSON.getString("mainClass");
+        String mainClassPath = pluginJSON.getString("mainClass"); // TODO FIX THIS
         ProxyPlugin plugin = null;
 
+        Enumeration<JarEntry> jarFileEntries = jarFile.entries();
         while (jarFileEntries.hasMoreElements()) {
             JarEntry entry = jarFileEntries.nextElement();
             if (entry.isDirectory()) continue;
@@ -148,6 +142,17 @@ public class CatPluginsManager extends PluginsManager {
 
     private boolean unloadPluginThings(File file) {
         return false;
+    }
+
+    // PRIVATE UTILS
+
+    private PluginDescription getDescriptionFromPluginJSON(URLClassLoader urlClassLoader, File file) throws IOException, PluginNotLoadedException {
+        InputStream pluginJSONInputStream = urlClassLoader.getResourceAsStream("plugin.json");
+        if (pluginJSONInputStream == null) throw new PluginNotLoadedException("Error while loading " + file.getName() + ". Is that a plugin?");
+
+        JSONObject pluginJSON = new JSONObject(new String(pluginJSONInputStream.readAllBytes()));
+        pluginJSONInputStream.close();
+        PluginDescription pluginDescription = new PluginDescription(pluginJSON.getString("name"), pluginJSON.getString("version"), pluginJSON.getString("author"));
     }
 
     @Contract("_ -> fail")
