@@ -23,8 +23,12 @@ import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+@SuppressWarnings({"MismatchedQueryAndUpdateOfCollection", "unused"})
 public class CatPluginsManager extends PluginsManager {
+
+    // Private server object
     private final CatProxyServer catProxyServer;
+
     // Plugins things
     private final HashMap<String, File> plugins = new HashMap<>();
     private final HashMap<String, ProxyPlugin> pluginsObject = new HashMap<>();
@@ -44,7 +48,7 @@ public class CatPluginsManager extends PluginsManager {
     }
 
     public void loadAllPlugins(@NotNull File pluginsDirectory)
-            throws IOException, ClassNotFoundException, URISyntaxException {
+            throws IOException, ClassNotFoundException {
         // Load all the jar files
         File[] files = pluginsDirectory.listFiles();
         if (files == null) return;
@@ -62,7 +66,7 @@ public class CatPluginsManager extends PluginsManager {
     }
 
     @Override
-    public void enablePlugin(@NotNull File file) throws PluginNotLoadedException, IOException, ClassNotFoundException, URISyntaxException {
+    public void enablePlugin(@NotNull File file) throws PluginNotLoadedException, IOException, ClassNotFoundException {
         // Notify loading
         catProxyServer.getLogger().log(LogLevel.INFO, "Enabling " + file.getName());
 
@@ -97,18 +101,19 @@ public class CatPluginsManager extends PluginsManager {
     @SuppressWarnings("resource")
     @NotNull
     private PluginDescription loadPluginThings(@NotNull File file)
-            throws IOException, ClassNotFoundException, URISyntaxException,
+            throws IOException, ClassNotFoundException,
             PluginNotLoadedException {
 
         JarFile jarFile = new JarFile(file.getAbsoluteFile());
         URLClassLoader urlClassLoader = URLClassLoader.newInstance(new URL[]{new URL("jar:file:" + file.getAbsolutePath() + "!/")});
 
         // Load the plugin.json file
-        PluginDescription pluginDescription = this.getDescriptionFromPluginJSON(urlClassLoader, file);
+        JSONObject pluginJSON = this.getJsonObjectFromPluginJSON(urlClassLoader, file);
+        PluginDescription pluginDescription = new PluginDescription(pluginJSON.getString("name"), pluginJSON.getString("version"), pluginJSON.getString("author"));
 
         // List of all the classes
         List<Class<?>> classes = new ArrayList<>();
-        String mainClassPath = pluginJSON.getString("mainClass"); // TODO FIX THIS
+        String mainClassPath = pluginJSON.getString("mainClass");
         ProxyPlugin plugin = null;
 
         Enumeration<JarEntry> jarFileEntries = jarFile.entries();
@@ -146,13 +151,16 @@ public class CatPluginsManager extends PluginsManager {
 
     // PRIVATE UTILS
 
-    private PluginDescription getDescriptionFromPluginJSON(URLClassLoader urlClassLoader, File file) throws IOException, PluginNotLoadedException {
+    @NotNull
+    private JSONObject getJsonObjectFromPluginJSON(@NotNull URLClassLoader urlClassLoader,
+                                                   File file)
+            throws IOException, PluginNotLoadedException {
         InputStream pluginJSONInputStream = urlClassLoader.getResourceAsStream("plugin.json");
         if (pluginJSONInputStream == null) throw new PluginNotLoadedException("Error while loading " + file.getName() + ". Is that a plugin?");
 
         JSONObject pluginJSON = new JSONObject(new String(pluginJSONInputStream.readAllBytes()));
         pluginJSONInputStream.close();
-        PluginDescription pluginDescription = new PluginDescription(pluginJSON.getString("name"), pluginJSON.getString("version"), pluginJSON.getString("author"));
+        return pluginJSON;
     }
 
     @Contract("_ -> fail")
