@@ -4,7 +4,6 @@ import com.github.lory24.watchcatproxy.api.CatProxyServer;
 import com.github.lory24.watchcatproxy.api.events.EventsManager;
 import com.github.lory24.watchcatproxy.api.logging.LogLevel;
 import com.github.lory24.watchcatproxy.api.logging.Logger;
-import com.github.lory24.watchcatproxy.api.plugin.PluginNotLoadedException;
 import com.github.lory24.watchcatproxy.api.plugin.PluginsManager;
 import com.github.lory24.watchcatproxy.protocol.BufferTypeException;
 import com.github.lory24.watchcatproxy.protocol.ReadExploitException;
