@@ -6,14 +6,14 @@ import com.github.lory24.watchcatproxy.api.plugin.PluginsManager;
 import lombok.Getter;
 import lombok.Setter;
 
-public abstract class CatProxyServer {
+public abstract class ProxyServer {
 
     /**
      * The server instance. Used by the API to get the instanced proxy object. This value is set when the Proxy has
      * been started.
      */
     @Getter @Setter
-    private static CatProxyServer instance;
+    private static ProxyServer instance;
 
     /**
      * Get the events manager of the server. It will return the Server's instanced events manager.
