@@ -4,6 +4,7 @@ import com.github.lory24.watchcatproxy.api.events.Event;
 import com.github.lory24.watchcatproxy.api.events.EventListener;
 import com.github.lory24.watchcatproxy.api.events.EventsManager;
 import com.github.lory24.watchcatproxy.api.events.Listener;
+import com.github.lory24.watchcatproxy.api.plugin.ProxyPlugin;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationTargetException;
@@ -12,15 +13,15 @@ import java.util.*;
 
 public class CatEventsManager extends EventsManager {
 
-    private final List<Listener> listeners = new ArrayList<>();
+    private final HashMap<Listener, ProxyPlugin> listeners = new HashMap<>();
 
     @Override
-    public void registerEvents(@NotNull Listener listener) {
-        this.listeners.add(listener);
+    public void registerEvents(@NotNull Listener listener, ProxyPlugin plugin) {
+        this.listeners.put(listener, plugin);
     }
 
     @Override
-    public void unregisterEvents(@NotNull Listener listener) {
+    public void unregisterEvents(@NotNull Listener listener, ProxyPlugin plugin) {
         this.listeners.remove(listener);
     }
 
@@ -32,7 +33,7 @@ public class CatEventsManager extends EventsManager {
         final HashMap<Method, Listener> listenersHashMap = new HashMap<>();
 
         // Add all the methods
-        for (Listener listener: listeners) {
+        for (Listener listener: listeners.keySet()) {
             for (Method method: listener.getClass().getMethods()) {
                 if (method.isAnnotationPresent(EventListener.class)) {
                     if (method.getParameters().length < 1 || !method.getParameters()[0].getType().equals(clazz)) continue;
@@ -56,5 +57,12 @@ public class CatEventsManager extends EventsManager {
 
         // Return the cancelled result
         return cancelled;
+    }
+
+    protected void unregisterAllPluginListener(ProxyPlugin plugin) {
+        listeners.forEach((k, v) -> {
+            if (!v.equals(plugin)) return;
+            listeners.remove(k, v);
+        });
     }
 }

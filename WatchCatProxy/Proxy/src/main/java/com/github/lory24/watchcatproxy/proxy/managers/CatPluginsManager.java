@@ -1,6 +1,6 @@
 package com.github.lory24.watchcatproxy.proxy.managers;
 
-import com.github.lory24.watchcatproxy.api.CatProxyServer;
+import com.github.lory24.watchcatproxy.api.ProxyServer;
 import com.github.lory24.watchcatproxy.api.logging.LogLevel;
 import com.github.lory24.watchcatproxy.api.plugin.PluginDescription;
 import com.github.lory24.watchcatproxy.api.plugin.PluginNotLoadedException;
@@ -27,14 +27,15 @@ import java.util.jar.JarFile;
 public class CatPluginsManager extends PluginsManager {
 
     // Private server object
-    private final CatProxyServer catProxyServer;
+    private final ProxyServer catProxyServer;
 
     // Plugins things
     private final HashMap<String, File> plugins = new HashMap<>();
     private final HashMap<String, ProxyPlugin> pluginsObject = new HashMap<>();
     private final HashMap<String, List<Class<?>>> pluginsClasses = new HashMap<>();
+    private final HashMap<String, Thread> pluginsThreads = new HashMap<>();
 
-    public CatPluginsManager(CatProxyServer catProxyServer) {
+    public CatPluginsManager(ProxyServer catProxyServer) {
         this.catProxyServer = catProxyServer;
     }
 
@@ -62,7 +63,10 @@ public class CatPluginsManager extends PluginsManager {
     }
 
     public void disableAllPlugins() {
-
+        for (String pluginName: this.plugins.keySet()) {
+            catProxyServer.getLogger().log(LogLevel.INFO, "Disabling " + pluginName + "!");
+            disablePlugin(pluginName);
+        }
     }
 
     @Override
@@ -75,14 +79,26 @@ public class CatPluginsManager extends PluginsManager {
         this.plugins.put(description.getName(), file);
 
         // Call the main class on another thread
-        new Thread(() -> {
+        Thread pluginThread = new Thread(() -> {
             getProxyPlugin(description.getName()).onEnable(); // Call onEnable function
-        }).start();
+        });
+
+        pluginThread.start();
+
+        // Add the plugin's thread to a hashmap
+        this.pluginsThreads.put(description.getName(), pluginThread);
     }
 
     @Override
     public void disablePlugin(String pluginName) {
+        // Call onDisable function
+        new Thread(() -> getProxyPlugin(pluginName).onDisable()).start();
 
+        // Unregister the listeners
+        ((CatEventsManager) catProxyServer.getEventsManager()).unregisterAllPluginListener(pluginsObject.get(pluginName));
+
+        // Unload all the plugin's things
+        unloadPluginThings(pluginName, plugins.get(pluginName));
     }
 
     @Override
@@ -97,7 +113,6 @@ public class CatPluginsManager extends PluginsManager {
 
     // DANGEROUS FUNCTIONS. ONLY EXECUTED FROM CLASS INTERNAL FUNCTIONS
 
-    // TODO OPTIMIZE THIS
     @SuppressWarnings("resource")
     @NotNull
     private PluginDescription loadPluginThings(@NotNull File file)
@@ -145,8 +160,16 @@ public class CatPluginsManager extends PluginsManager {
         return pluginDescription;
     }
 
-    private boolean unloadPluginThings(File file) {
-        return false;
+    private void unloadPluginThings(String pluginName, File file) {
+        // Interrupt the plugin thread
+        this.pluginsThreads.get(pluginName).interrupt();
+
+        // Remove all the hashmaps
+        this.pluginsThreads.remove(pluginName);
+        this.plugins.remove(pluginName); this.pluginsObject.remove(pluginName);
+
+        // TODO Unload the classes
+        this.pluginsClasses.remove(pluginName);
     }
 
     // PRIVATE UTILS
