@@ -1,5 +1,6 @@
 package com.github.lory24.watchcatproxy.api.events;
 
+import com.github.lory24.watchcatproxy.api.plugin.ProxyPlugin;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationTargetException;
@@ -9,14 +10,17 @@ public abstract class EventsManager {
     /**
      * This function will register an event listener.
      * @param listener The listener
+     * @param plugin The plugin that has that listener. Used by the plugin manager to unregister a listener when the
+     *               plugin get disabled.
      */
-    public abstract void registerEvents(@NotNull final Listener listener);
+    public abstract void registerEvents(@NotNull final Listener listener, ProxyPlugin plugin);
 
     /**
      * This function will be used to unregister an event listener.
      * @param listener The listener
+     * @param plugin The plugin that has that listener. Same description as up there.
      */
-    public abstract void unregisterEvents(@NotNull final Listener listener);
+    public abstract void unregisterEvents(@NotNull final Listener listener, ProxyPlugin plugin);
 
     /**
      * This function will fire an event.
