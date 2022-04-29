@@ -1,6 +1,6 @@
 package com.github.lory24.watchcatproxy.proxy;
 
-import com.github.lory24.watchcatproxy.api.CatProxyServer;
+import com.github.lory24.watchcatproxy.api.ProxyServer;
 import com.github.lory24.watchcatproxy.api.events.defaults.HandshakeReceivedEvent;
 import com.github.lory24.watchcatproxy.api.logging.LogLevel;
 import com.github.lory24.watchcatproxy.api.results.HandshakeResult;
@@ -60,7 +60,7 @@ public class InitialHandler {
         ExploitUtils.checkBufferExploits(handshakeBuffer);
 
         // Fire the handshake event
-        boolean cancelled = CatProxyServer.getInstance().getEventsManager().fireEvent(HandshakeReceivedEvent.class,
+        boolean cancelled = ProxyServer.getInstance().getEventsManager().fireEvent(HandshakeReceivedEvent.class,
                 new HandshakeReceivedEvent(handshakeResult, this.socket.getInetAddress())
         );
 
@@ -100,7 +100,7 @@ public class InitialHandler {
             this.disconnectReason = reason;
             this.socket.close();
         } catch (IOException e) {
-            CatProxyServer.getInstance().getLogger().log(LogLevel.ERROR, "An error was occurred while disconnecting the socket! Error: " + e.getMessage());
+            ProxyServer.getInstance().getLogger().log(LogLevel.ERROR, "An error was occurred while disconnecting the socket! Error: " + e.getMessage());
         }
     }
 }

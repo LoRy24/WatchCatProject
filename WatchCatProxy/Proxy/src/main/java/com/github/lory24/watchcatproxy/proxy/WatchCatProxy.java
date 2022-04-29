@@ -1,6 +1,6 @@
 package com.github.lory24.watchcatproxy.proxy;
 
-import com.github.lory24.watchcatproxy.api.CatProxyServer;
+import com.github.lory24.watchcatproxy.api.ProxyServer;
 import com.github.lory24.watchcatproxy.api.events.EventsManager;
 import com.github.lory24.watchcatproxy.api.logging.LogLevel;
 import com.github.lory24.watchcatproxy.api.logging.Logger;
@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @SuppressWarnings("FieldCanBeLocal")
-public class WatchCatProxy extends CatProxyServer implements Runnable {
+public class WatchCatProxy extends ProxyServer implements Runnable {
 
     // Server properties file
     @Getter
@@ -57,6 +57,8 @@ public class WatchCatProxy extends CatProxyServer implements Runnable {
             this.serverProperties = new File("server-properties.json");
             this.loadServerPropertiesFile();
             this.serverPropertiesJSON = ServerProperties.loadFileContent(this.serverProperties);
+
+            // Start the scheduler
 
             // Instance the events manager
             this.eventsManager = new CatEventsManager();

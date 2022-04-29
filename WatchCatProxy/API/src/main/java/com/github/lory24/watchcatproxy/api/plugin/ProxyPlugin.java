@@ -1,6 +1,6 @@
 package com.github.lory24.watchcatproxy.api.plugin;
 
-import com.github.lory24.watchcatproxy.api.CatProxyServer;
+import com.github.lory24.watchcatproxy.api.ProxyServer;
 import com.github.lory24.watchcatproxy.api.logging.LogLevel;
 import lombok.Getter;
 
@@ -12,7 +12,7 @@ public class ProxyPlugin {
      * Don't really know why I've put this here... It might be useful later...
      */
     @Getter
-    private CatProxyServer proxyServer;
+    private ProxyServer proxyServer;
 
     /**
      * The description of the plugin. This object contains all the plugin.json infos about the plugin, except
@@ -43,7 +43,7 @@ public class ProxyPlugin {
      * into square brackets ("[]").
      */
     public void log(LogLevel level, String message) {
-        CatProxyServer.getInstance().getLogger().log(level, "[" + this.description.getName() + "] " + message);
+        ProxyServer.getInstance().getLogger().log(level, "[" + this.description.getName() + "] " + message);
     }
 
     /**
@@ -52,7 +52,7 @@ public class ProxyPlugin {
      * @param proxyServer The instanced Proxy server
      * @param description The plugin description object. Created when loaded the jar file
      */
-    public void initialize(CatProxyServer proxyServer, PluginDescription description, File pluginFile) {
+    public void initialize(ProxyServer proxyServer, PluginDescription description, File pluginFile) {
         this.proxyServer = proxyServer;
         this.description = description;
         this.pluginFile  =  pluginFile;
