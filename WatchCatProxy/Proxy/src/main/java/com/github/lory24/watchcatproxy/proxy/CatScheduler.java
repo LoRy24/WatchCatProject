@@ -24,7 +24,7 @@ public class CatScheduler extends ProxyScheduler {
     @Override
     public ProxyAsyncTask runAsyncRepeat(ProxyPlugin plugin, Runnable runnable, int ticks) {
         ProxyAsyncTask proxyAsyncTask = new ProxyAsyncTask(generateTaskID(), new Thread(() -> {
-            while (true) {
+            while (!Thread.currentThread().isInterrupted()) {
                 try {
                     Thread.sleep(50L * ticks);
                     runnable.run();
