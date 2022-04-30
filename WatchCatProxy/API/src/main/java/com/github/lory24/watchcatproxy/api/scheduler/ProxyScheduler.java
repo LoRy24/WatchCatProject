@@ -2,7 +2,7 @@ package com.github.lory24.watchcatproxy.api.scheduler;
 
 import com.github.lory24.watchcatproxy.api.plugin.ProxyPlugin;
 
-public abstract class CatProxyScheduler {
+public abstract class ProxyScheduler {
 
     /**
      * Run an async task.
