@@ -15,15 +15,24 @@ public class CatScheduler extends ProxyScheduler {
 
     @Override
     public ProxyAsyncTask runAsync(ProxyPlugin plugin, Runnable runnable) {
-        ProxyAsyncTask proxyAsyncTask = new ProxyAsyncTask(generateTaskID(), new Thread(runnable));
-        this.asyncTasks.put(proxyAsyncTask.getTaskID(), proxyAsyncTask);
+        // Generate a task id
+        int taskID = generateTaskID();
+        Thread taskThread = new Thread(runnable);
+        taskThread.setName("CatProxy-AsyncTask#" + taskID);
+        taskThread.start();
+        // Return the new asyncTask object
+        ProxyAsyncTask proxyAsyncTask = new ProxyAsyncTask(taskID, taskThread);
+        this.asyncTasks.put(taskID, proxyAsyncTask);
         return proxyAsyncTask;
     }
 
     @SuppressWarnings("BusyWait")
     @Override
     public ProxyAsyncTask runAsyncRepeat(ProxyPlugin plugin, Runnable runnable, int ticks) {
-        ProxyAsyncTask proxyAsyncTask = new ProxyAsyncTask(generateTaskID(), new Thread(() -> {
+        // Generate a task id
+        int taskID = generateTaskID();
+        // Create the thread
+        Thread taskThread = new Thread(() -> {
             while (!Thread.currentThread().isInterrupted()) {
                 try {
                     Thread.sleep(50L * ticks);
@@ -31,8 +40,13 @@ public class CatScheduler extends ProxyScheduler {
                 } catch (InterruptedException ignored) {
                 }
             }
-        }));
-        this.asyncTasks.put(proxyAsyncTask.getTaskID(), proxyAsyncTask);
+        });
+        taskThread.setName("CatProxy-AsyncTask#" + taskID);
+        taskThread.start();
+
+        // Return the new asyncTask object
+        ProxyAsyncTask proxyAsyncTask = new ProxyAsyncTask(taskID, taskThread);
+        this.asyncTasks.put(taskID, proxyAsyncTask);
         return proxyAsyncTask;
     }
 
