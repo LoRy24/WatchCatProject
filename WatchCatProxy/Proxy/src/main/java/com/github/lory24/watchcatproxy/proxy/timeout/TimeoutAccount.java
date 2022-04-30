@@ -36,6 +36,6 @@ public class TimeoutAccount {
 
         // Run the new task
         this.inTimeout = true;
-        watchCatProxy.getScheduler().runAsyncLater(null, () -> this.inTimeout = false, this.timeoutLevel.getTicks());
+        this.asyncTask = watchCatProxy.getScheduler().runAsyncLater(null, () -> this.inTimeout = false, this.timeoutLevel.getTicks());
     }
 }
