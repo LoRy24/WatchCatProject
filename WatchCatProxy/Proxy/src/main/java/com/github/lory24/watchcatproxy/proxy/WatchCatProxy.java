@@ -116,6 +116,13 @@ public class WatchCatProxy extends ProxyServer implements Runnable {
                     // Check if the connection is blocked
                     if (this.blockedAddresses.contains(newConnection.getInetAddress())) { newConnection.close(); continue; }
 
+                    // Process timeout
+                    boolean inTimeout = checkTimeout(newConnection);
+                    if (inTimeout) {
+                        newConnection.close();
+                        return;
+                    }
+
                     this.processConnection(newConnection);
                 } catch (IOException e) {
                     this.logError(e.getMessage());
@@ -150,6 +157,11 @@ public class WatchCatProxy extends ProxyServer implements Runnable {
                 }
             }
         }).start();
+    }
+
+    private boolean checkTimeout(Socket socket) {
+        // TODO CHECK IF THE CONNECTION IS IN TIMEOUT AND DO THE OTHER PROCEDURES
+        return true;
     }
 
     private void logError(String message) {
