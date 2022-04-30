@@ -43,7 +43,7 @@ public class InitialHandler {
 
     private int processHandshake()
             throws InvocationTargetException,
-            IllegalAccessException, ReadExploitException {
+            IllegalAccessException, ReadExploitException, BufferTypeException {
         // Read the handshake packet
         PacketBuffer handshakeBuffer = secureReadPacketBuffer();
 
@@ -53,8 +53,8 @@ public class InitialHandler {
         // Read the HandshakePacket and put the data into an object
         HandshakePacket handshakePacket = new HandshakePacket();
         handshakePacket.readData(handshakeBuffer);
-        this.handshakeResult = new HandshakeResult(handshakePacket.getProtocolVersion(), handshakePacket.getServerAddress(), handshakePacket.getPort(),
-                HandshakeResult.HandshakeNextState.convertIntegerToState(handshakePacket.getNextState()));
+        this.handshakeResult = new HandshakeResult(handshakePacket.getProtocolVersion().toInteger(), handshakePacket.getServerAddress(), handshakePacket.getPort(),
+                HandshakeResult.HandshakeNextState.convertIntegerToState(handshakePacket.getNextState().toInteger()));
 
         // Check for exploited packet
         ExploitUtils.checkBufferExploits(handshakeBuffer);

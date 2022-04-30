@@ -89,7 +89,7 @@ public class PacketBuffer {
         this.writeByte((byte)(i));
     }
 
-    public int readVarIntFromBuffer() throws ReadExploitException {
+    public VarInt readVarIntFromBuffer() throws BufferTypeException, ReadExploitException {
         int value = 0, length = 0;
         byte current;
 
@@ -102,16 +102,12 @@ public class PacketBuffer {
             }
         }
         while ((current & 128) == 128);
-
-        return value;
+        return new VarInt(value);
     }
 
-    public void writeVarIntToBuffer(int input) throws BufferTypeException {
-        while ((input & -128) != 0) {
-            this.writeByte((byte) (input & 127 | 128));
-            input >>>= 7;
-        }
-        this.writeByte((byte) input);
+
+    public void writeVarIntToBuffer(VarInt input) throws BufferTypeException {
+        this.writeBytes(input.buffer.getBufferBytes());
     }
 
     // LONG
@@ -143,21 +139,19 @@ public class PacketBuffer {
 
     // UTF-8 STRING
 
-    public String readUTF8String() throws ReadExploitException {
-        int length = this.readVarIntFromBuffer();
+    public String readUTF8String() throws ReadExploitException, BufferTypeException {
+        int length = this.readVarIntFromBuffer().toInteger();
         return new String(readBytes(length), StandardCharsets.UTF_8);
     }
 
     public void writeUTFString(@NotNull String s) throws BufferTypeException {
-        this.writeVarIntToBuffer(s.length());
+        this.writeVarIntToBuffer(new VarInt(s.length()));
         this.writeBytes(s.getBytes(StandardCharsets.UTF_8));
     }
 
     // Short
 
     public void writeUnsignedShort(int i) throws BufferTypeException {
-        this.writeByte((byte) ((i >> 24) & 0xFF));
-        this.writeByte((byte) ((i >> 16) & 0xFF));
         this.writeByte((byte) ((i >> 8) & 0xFF));
         this.writeByte((byte) ((i) & 0xFF));
     }
