@@ -5,6 +5,7 @@ import com.github.lory24.watchcatproxy.api.events.EventsManager;
 import com.github.lory24.watchcatproxy.api.logging.LogLevel;
 import com.github.lory24.watchcatproxy.api.logging.Logger;
 import com.github.lory24.watchcatproxy.api.plugin.PluginsManager;
+import com.github.lory24.watchcatproxy.api.scheduler.ProxyScheduler;
 import com.github.lory24.watchcatproxy.protocol.BufferTypeException;
 import com.github.lory24.watchcatproxy.protocol.ReadExploitException;
 import lombok.Getter;
@@ -15,6 +16,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @SuppressWarnings("FieldCanBeLocal")
 public class WatchCatProxy extends ProxyServer implements Runnable {
@@ -40,6 +42,9 @@ public class WatchCatProxy extends ProxyServer implements Runnable {
     private CatEventsManager eventsManager;
     private CatPluginsManager pluginsManager;
 
+    // The scheduler
+    private CatScheduler scheduler;
+
     {
         this.state = ServerState.STARTING;
     }
@@ -57,6 +62,7 @@ public class WatchCatProxy extends ProxyServer implements Runnable {
             this.serverPropertiesJSON = ServerProperties.loadFileContent(this.serverProperties);
 
             // Start the scheduler
+            this.scheduler = new CatScheduler();
 
             // Instance the events manager
             this.eventsManager = new CatEventsManager();
@@ -82,8 +88,7 @@ public class WatchCatProxy extends ProxyServer implements Runnable {
             serverProperties.createNewFile();
             FileOutputStream fileOutputStream = new FileOutputStream(serverProperties);
             InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream("server-properties.json");
-            assert inputStream != null;
-            fileOutputStream.write(inputStream.readAllBytes());
+            fileOutputStream.write(Objects.requireNonNull(inputStream).readAllBytes());
             fileOutputStream.flush();fileOutputStream.close();
         }
     }
@@ -170,5 +175,10 @@ public class WatchCatProxy extends ProxyServer implements Runnable {
     @Override
     public PluginsManager getPluginsManager() {
         return this.pluginsManager;
+    }
+
+    @Override
+    public ProxyScheduler getScheduler() {
+        return this.scheduler;
     }
 }
