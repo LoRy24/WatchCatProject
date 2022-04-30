@@ -3,6 +3,7 @@ package com.github.lory24.watchcatproxy.api;
 import com.github.lory24.watchcatproxy.api.events.EventsManager;
 import com.github.lory24.watchcatproxy.api.logging.Logger;
 import com.github.lory24.watchcatproxy.api.plugin.PluginsManager;
+import com.github.lory24.watchcatproxy.api.scheduler.ProxyScheduler;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -43,4 +44,12 @@ public abstract class ProxyServer {
      * @return The manager object
      */
     public abstract PluginsManager getPluginsManager();
+
+    /**
+     * Get the server's scheduler object. It will be used to run tasks in an "optimized" way. It will be also used
+     * to run asynchronously tasks.
+     *
+     * @return The instanced scheduler object
+     */
+    public abstract ProxyScheduler getScheduler();
 }
