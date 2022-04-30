@@ -2,7 +2,6 @@ package com.github.lory24.watchcatproxy.proxy;
 
 import com.github.lory24.watchcatproxy.api.ProxyServer;
 import com.github.lory24.watchcatproxy.api.logging.LogLevel;
-import com.github.lory24.watchcatproxy.proxy.managers.CatPluginsManager;
 import lombok.SneakyThrows;
 
 public class Launcher {

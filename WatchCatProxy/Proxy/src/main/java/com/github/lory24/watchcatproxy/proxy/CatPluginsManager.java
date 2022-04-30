@@ -1,4 +1,4 @@
-package com.github.lory24.watchcatproxy.proxy.managers;
+package com.github.lory24.watchcatproxy.proxy;
 
 import com.github.lory24.watchcatproxy.api.ProxyServer;
 import com.github.lory24.watchcatproxy.api.logging.LogLevel;
@@ -6,6 +6,7 @@ import com.github.lory24.watchcatproxy.api.plugin.PluginDescription;
 import com.github.lory24.watchcatproxy.api.plugin.PluginNotLoadedException;
 import com.github.lory24.watchcatproxy.api.plugin.PluginsManager;
 import com.github.lory24.watchcatproxy.api.plugin.ProxyPlugin;
+import com.github.lory24.watchcatproxy.proxy.CatEventsManager;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONObject;

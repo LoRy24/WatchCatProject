@@ -7,8 +7,6 @@ import com.github.lory24.watchcatproxy.api.logging.Logger;
 import com.github.lory24.watchcatproxy.api.plugin.PluginsManager;
 import com.github.lory24.watchcatproxy.protocol.BufferTypeException;
 import com.github.lory24.watchcatproxy.protocol.ReadExploitException;
-import com.github.lory24.watchcatproxy.proxy.managers.CatEventsManager;
-import com.github.lory24.watchcatproxy.proxy.managers.CatPluginsManager;
 import lombok.Getter;
 import org.json.JSONObject;
 
