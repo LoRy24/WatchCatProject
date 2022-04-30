@@ -13,6 +13,15 @@ public abstract class ProxyScheduler {
     public abstract ProxyAsyncTask runAsync(ProxyPlugin plugin, Runnable runnable);
 
     /**
+     * Run an async task with a delay.
+     * @param plugin The plugin object. Same reason as up there
+     * @param runnable The task content
+     * @param delay How many ticks to wait before run the task
+     * @return The ProxyAsync task
+     */
+    public abstract ProxyAsyncTask runAsyncLater(ProxyPlugin plugin, Runnable runnable, int delay);
+
+    /**
      * Run a repeating async task
      * @param plugin The plugin object. Same reason as up there
      * @param runnable The task content

@@ -6,7 +6,6 @@ import com.github.lory24.watchcatproxy.api.plugin.PluginDescription;
 import com.github.lory24.watchcatproxy.api.plugin.PluginNotLoadedException;
 import com.github.lory24.watchcatproxy.api.plugin.PluginsManager;
 import com.github.lory24.watchcatproxy.api.plugin.ProxyPlugin;
-import com.github.lory24.watchcatproxy.proxy.CatEventsManager;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONObject;
@@ -165,11 +164,12 @@ public class CatPluginsManager extends PluginsManager {
         // Interrupt the plugin thread
         this.pluginsThreads.get(pluginName).interrupt();
 
+        // Stop the tasks
+        ((CatScheduler) this.catProxyServer.getScheduler()).cancelAllPluginsTask(this.pluginsObject.get(pluginName));
+
         // Remove all the hashmaps
         this.pluginsThreads.remove(pluginName);
         this.plugins.remove(pluginName); this.pluginsObject.remove(pluginName);
-
-        // TODO Unload the classes
         this.pluginsClasses.remove(pluginName);
     }
 
