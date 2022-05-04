@@ -7,8 +7,10 @@ import com.github.lory24.watchcatproxy.api.results.HandshakeResult;
 import com.github.lory24.watchcatproxy.protocol.*;
 import com.github.lory24.watchcatproxy.protocol.packets.HandshakePacket;
 import lombok.Getter;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.Socket;
@@ -19,6 +21,8 @@ public class InitialHandler {
 
     // Private values
     private final Socket socket;
+    private final DataOutputStream dataOutputStream;
+    private final DataInputStream dataInputStream;
 
     // Disconnection values
     @Getter
@@ -28,27 +32,31 @@ public class InitialHandler {
     @Getter
     private HandshakeResult handshakeResult;
 
-    public InitialHandler(Socket socket) {
+    public InitialHandler(@NotNull Socket socket) throws IOException {
         this.socket = socket;
+        this.dataOutputStream = new DataOutputStream(socket.getOutputStream());
+        this.dataInputStream= new DataInputStream(socket.getInputStream());
     }
 
     public void process()
             throws BufferTypeException, InvocationTargetException, IllegalAccessException,
             ReadExploitException, IOException {
         // Process the handshake state
-        if (processHandshake() == -1) {
+        if (processHandshakeReceive() == -1) {
             return;
         }
     }
 
-    private int processHandshake()
+    private int processHandshakeReceive()
             throws InvocationTargetException, IllegalAccessException, ReadExploitException, BufferTypeException, IOException {
         // Read the handshake packet
         PacketBuffer handshakeBuffer = secureReadPacketBuffer();
 
         // Check if there was an error during handshake reading state
-        if (handshakeBuffer == null) { disconnectNoPlayerMessage("Invalid Handshake procedure!"); return -1; }
-
+        if (handshakeBuffer == null || handshakeBuffer.getBufferBytes().length > 20) {
+            disconnectNoPlayerMessage("Invalid Handshake procedure!");
+            return -1;
+        }
 
         // Read the HandshakePacket and put the data into an object
         HandshakePacket handshakePacket = new HandshakePacket();
@@ -83,7 +91,6 @@ public class InitialHandler {
      * @return The packet's data
      */
     public PacketBuffer secureReadPacketBuffer() throws IOException {
-        DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
         int length = VarIntUtils.readVarInt(dataInputStream);
         if (length <= 0) return null;
         return new PacketBuffer(dataInputStream.readNBytes(length));
