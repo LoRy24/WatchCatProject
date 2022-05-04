@@ -1,14 +1,17 @@
 package com.github.lory24.watchcatproxy.protocol;
 
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 
-public class VarIntUtils {
+public class VarIntUtil {
 
-    public static int readVarInt(@NotNull DataInputStream dataInputStream) throws IOException {
+    @NotNull
+    @Contract("_ -> new")
+    public static VarInt readVarInt(@NotNull DataInputStream dataInputStream) throws IOException,
+            BufferTypeException {
         int value = 0, length = 0;
         byte current;
 
@@ -22,14 +25,6 @@ public class VarIntUtils {
         }
         while ((current & 128) == 128);
 
-        return value;
-    }
-
-    public void writeVarInt(@NotNull DataOutputStream dataOutputStream, int input) throws IOException {
-        while ((input & -128) != 0) {
-            dataOutputStream.writeByte(input & 127 | 128);
-            input >>>= 7;
-        }
-        dataOutputStream.writeByte(input);
+        return new VarInt(value);
     }
 }

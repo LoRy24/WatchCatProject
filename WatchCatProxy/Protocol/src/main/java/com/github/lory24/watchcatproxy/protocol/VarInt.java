@@ -1,24 +1,19 @@
 package com.github.lory24.watchcatproxy.protocol;
 
 public class VarInt {
-    public final PacketBuffer buffer;
+    public final PacketBuffer varIntBuffer;
 
     public VarInt(int number) throws BufferTypeException {
-        buffer = new PacketBuffer();
+        varIntBuffer = new PacketBuffer();
         while ((number & -128) != 0) {
-            buffer.writeByte((byte) (number & 127 | 128));
+            varIntBuffer.writeByte((byte) (number & 127 | 128));
             number >>>= 7;
         }
-        buffer.writeByte((byte) number);
-    }
-
-    public VarInt(byte[] bytes) throws BufferTypeException {
-        buffer = new PacketBuffer();
-        buffer.writeBytes(bytes);
+        varIntBuffer.writeByte((byte) number);
     }
 
     public int toInteger() {
-        byte[] copiedBytes = this.buffer.getBufferBytes();
+        byte[] copiedBytes = this.varIntBuffer.getBufferBytes();
         int index = 0;
 
         int value = 0, length = 0;

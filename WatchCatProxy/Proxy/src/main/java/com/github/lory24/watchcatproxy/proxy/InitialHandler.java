@@ -90,10 +90,10 @@ public class InitialHandler {
      * NOTE: NOT COMPATIBLE WITH ENCRYPTION
      * @return The packet's data
      */
-    public PacketBuffer secureReadPacketBuffer() throws IOException {
-        int length = VarIntUtils.readVarInt(dataInputStream);
-        if (length <= 0) return null;
-        return new PacketBuffer(dataInputStream.readNBytes(length));
+    public PacketBuffer secureReadPacketBuffer() throws IOException, BufferTypeException {
+        VarInt length = VarIntUtil.readVarInt(dataInputStream);
+        if (length.toInteger() <= 0) return null;
+        return new PacketBuffer(dataInputStream.readNBytes(length.toInteger()));
     }
 
     @SuppressWarnings("SameParameterValue")
