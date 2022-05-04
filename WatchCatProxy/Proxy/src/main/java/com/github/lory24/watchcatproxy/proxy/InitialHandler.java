@@ -34,7 +34,7 @@ public class InitialHandler {
 
     public void process()
             throws BufferTypeException, InvocationTargetException, IllegalAccessException,
-            ReadExploitException {
+            ReadExploitException, IOException {
         // Process the handshake state
         if (processHandshake() == -1) {
             return;
@@ -42,13 +42,13 @@ public class InitialHandler {
     }
 
     private int processHandshake()
-            throws InvocationTargetException,
-            IllegalAccessException, ReadExploitException, BufferTypeException {
+            throws InvocationTargetException, IllegalAccessException, ReadExploitException, BufferTypeException, IOException {
         // Read the handshake packet
         PacketBuffer handshakeBuffer = secureReadPacketBuffer();
 
         // Check if there was an error during handshake reading state
         if (handshakeBuffer == null) { disconnectNoPlayerMessage("Invalid Handshake procedure!"); return -1; }
+
 
         // Read the HandshakePacket and put the data into an object
         HandshakePacket handshakePacket = new HandshakePacket();
@@ -82,15 +82,11 @@ public class InitialHandler {
      * NOTE: NOT COMPATIBLE WITH ENCRYPTION
      * @return The packet's data
      */
-    public PacketBuffer secureReadPacketBuffer() {
-        try {
-            DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
-            int length = VarIntUtils.readVarInt(dataInputStream);
-            if (length <= 0) throw new Exception();
-            return new PacketBuffer(dataInputStream.readNBytes(length));
-        } catch (Exception e) {
-            return null;
-        }
+    public PacketBuffer secureReadPacketBuffer() throws IOException {
+        DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
+        int length = VarIntUtils.readVarInt(dataInputStream);
+        if (length <= 0) return null;
+        return new PacketBuffer(dataInputStream.readNBytes(length));
     }
 
     @SuppressWarnings("SameParameterValue")

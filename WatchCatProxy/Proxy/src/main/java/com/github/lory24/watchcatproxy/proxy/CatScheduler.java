@@ -3,12 +3,13 @@ package com.github.lory24.watchcatproxy.proxy;
 import com.github.lory24.watchcatproxy.api.plugin.ProxyPlugin;
 import com.github.lory24.watchcatproxy.api.scheduler.ProxyAsyncTask;
 import com.github.lory24.watchcatproxy.api.scheduler.ProxyScheduler;
+import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 
 public class CatScheduler extends ProxyScheduler {
-    private final HashMap<Integer, ProxyAsyncTask> asyncTasks;
+    @Getter private final HashMap<Integer, ProxyAsyncTask> asyncTasks;
     private final HashMap<ProxyAsyncTask, ProxyPlugin> pluginAsyncTasks;
 
     public CatScheduler() {
@@ -21,7 +22,10 @@ public class CatScheduler extends ProxyScheduler {
         // Generate a task id
         int taskID = generateTaskID();
         // Return the new asyncTask object
-        ProxyAsyncTask proxyAsyncTask = new ProxyAsyncTask(taskID, runThread(taskID, runnable));
+        ProxyAsyncTask proxyAsyncTask = new ProxyAsyncTask(taskID, runThread(taskID, () -> {
+            runnable.run();
+            this.cancelTask(taskID);
+        }));
         this.asyncTasks.put(taskID, proxyAsyncTask);
         if (plugin != null) this.pluginAsyncTasks.put(proxyAsyncTask, plugin);
         return proxyAsyncTask;
@@ -38,6 +42,7 @@ public class CatScheduler extends ProxyScheduler {
                 runnable.run();
             } catch (InterruptedException ignored) {
             }
+            this.cancelTask(taskID);
         }));
         this.asyncTasks.put(taskID, proxyAsyncTask);
         if (plugin != null) this.pluginAsyncTasks.put(proxyAsyncTask, plugin);
@@ -66,7 +71,7 @@ public class CatScheduler extends ProxyScheduler {
 
     @Override
     public void cancelTask(int taskID) {
-        this.asyncTasks.get(taskID).getThread().interrupt();
+        if (this.asyncTasks.containsKey(taskID) && !this.asyncTasks.get(taskID).getThread().isInterrupted()) this.asyncTasks.get(taskID).getThread().interrupt();
         this.asyncTasks.remove(taskID);
 
         // Remove the task from the plugin's tasks hashmap

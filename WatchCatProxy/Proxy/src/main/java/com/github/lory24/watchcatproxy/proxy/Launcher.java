@@ -21,6 +21,9 @@ public class Launcher {
             // Stop the scheduler
             ProxyServer.getInstance().getLogger().log(LogLevel.INFO, "Done. Disabling the proxy's scheduler, wait...");
             ((CatScheduler) ProxyServer.getInstance().getScheduler()).cancelAllTasks();
+            // Save the logger
+            ProxyServer.getInstance().getLogger().log(LogLevel.INFO, "Done. Saving the log file, wait...");
+            ProxyServer.getInstance().getLogger().saveLogger();
             // Notify disable
             ProxyServer.getInstance().getLogger().log(LogLevel.SUCCESS, "Done. Bye!");
         });

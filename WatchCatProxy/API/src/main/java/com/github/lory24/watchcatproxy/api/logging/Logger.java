@@ -3,8 +3,10 @@ package com.github.lory24.watchcatproxy.api.logging;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.Date;
 
 @SuppressWarnings({"unused", "deprecation"})
@@ -40,11 +42,16 @@ public class Logger {
      * @param logString The log string
      */
     private void storeLog(String logString) {
+        savedLogContent += logString + "\n";
+    }
+
+    /**
+     * Save the current log content into the log file.
+     */
+    public void saveLogger() {
         try {
-            savedLogContent += logString + "\n";
-            FileWriter writer = new FileWriter(logFile);
-            writer.write(savedLogContent);
-            writer.close();
+            Files.writeString(Path.of(this.logFile.toURI()), savedLogContent, StandardOpenOption.APPEND);
+            this.savedLogContent = "";
         } catch (IOException e) {
             this.log(LogLevel.ERROR, "Error while storing the log. Error: " + e.getMessage(), false);
         }

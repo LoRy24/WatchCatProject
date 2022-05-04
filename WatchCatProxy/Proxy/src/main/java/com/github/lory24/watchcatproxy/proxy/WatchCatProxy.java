@@ -9,6 +9,7 @@ import com.github.lory24.watchcatproxy.api.scheduler.ProxyScheduler;
 import com.github.lory24.watchcatproxy.protocol.BufferTypeException;
 import com.github.lory24.watchcatproxy.protocol.ReadExploitException;
 import lombok.Getter;
+import org.jetbrains.annotations.NotNull;
 import org.json.JSONObject;
 
 import java.io.*;
@@ -16,7 +17,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 @SuppressWarnings("FieldCanBeLocal")
 public class WatchCatProxy extends ProxyServer implements Runnable {
@@ -25,9 +25,13 @@ public class WatchCatProxy extends ProxyServer implements Runnable {
     @Getter
     private File serverProperties;
 
+    // Configuration values
+    @Getter
+    private boolean serverEnableTotalExploitCooldown;
+
     // Server properties JSON
     @Getter
-    private String serverPropertiesJSON;
+    private JSONObject serverPropertiesJSONObject;
 
     // Security stuff
     @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
@@ -45,6 +49,9 @@ public class WatchCatProxy extends ProxyServer implements Runnable {
     // The scheduler
     private CatScheduler scheduler;
 
+    // Exploit notification message timeout
+    private final List<InetAddress> timeOutAddressesFromExMsg = new ArrayList<>();
+
     {
         this.state = ServerState.STARTING;
     }
@@ -52,21 +59,23 @@ public class WatchCatProxy extends ProxyServer implements Runnable {
     @Override
     public void run() {
         try {
+            // Start the scheduler
+            this.scheduler = new CatScheduler();
+
             // Load the logger
             logger = new Logger(Logger.generateLoggerLogFile(), "WatchCat");
+            this.scheduler.runAsyncRepeat(null, () -> this.logger.saveLogger(), 60); // Save the logger every 60 ticks (3s)
             getLogger().log(LogLevel.INFO, "Logger enabled!");
 
             // Load server properties
             this.serverProperties = new File("server-properties.json");
-            this.loadServerPropertiesFile();
-            this.serverPropertiesJSON = ServerProperties.loadFileContent(this.serverProperties);
-
-            // Start the scheduler
-            this.scheduler = new CatScheduler();
+            ServerProperties.loadServerPropertiesFile(this.serverProperties, this);
+            this.serverPropertiesJSONObject = new JSONObject(ServerProperties.loadFileContent(this.serverProperties));
+            this.serverEnableTotalExploitCooldown = (boolean) ServerProperties.serverEnableExploitTotalCooldown.get(this.serverPropertiesJSONObject);
 
             // Instance the events manager
             this.eventsManager = new CatEventsManager();
-            getLogger().log(LogLevel.INFO, "Events manager has been instanced! Loading plugins...");
+            getLogger().log(LogLevel.INFO, "Events manager has been loaded! Loading plugins, wait.");
 
             // Load the plugins
             this.pluginsManager = new CatPluginsManager(this);
@@ -82,21 +91,10 @@ public class WatchCatProxy extends ProxyServer implements Runnable {
         }
     }
 
-    @SuppressWarnings("ResultOfMethodCallIgnored")
-    private void loadServerPropertiesFile() throws IOException {
-        if (!serverProperties.exists()) {
-            serverProperties.createNewFile();
-            FileOutputStream fileOutputStream = new FileOutputStream(serverProperties);
-            InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream("server-properties.json");
-            fileOutputStream.write(Objects.requireNonNull(inputStream).readAllBytes());
-            fileOutputStream.flush();fileOutputStream.close();
-        }
-    }
-
     private void startServerSocket() {
         try {
             // Create the server
-            this.serverSocket = new ServerSocket((int) ServerProperties.port.get(new JSONObject(this.serverPropertiesJSON)));
+            this.serverSocket = new ServerSocket((int) ServerProperties.port.get(this.serverPropertiesJSONObject));
             // Start listening
             listening();
         } catch (IOException e) {
@@ -114,16 +112,21 @@ public class WatchCatProxy extends ProxyServer implements Runnable {
                     Socket newConnection = this.serverSocket.accept();
 
                     // Check if the connection is blocked
-                    if (this.blockedAddresses.contains(newConnection.getInetAddress())) { newConnection.close(); continue; }
-
-                    // Process timeout
-                    boolean inTimeout = checkTimeout(newConnection);
-                    if (inTimeout) {
+                    if (this.blockedAddresses.contains(newConnection.getInetAddress())) {
                         newConnection.close();
-                        return;
+                        continue;
                     }
 
-                    this.processConnection(newConnection);
+                    // If the total exploit cooldown is enabled and the connection is in exploit cooldown,
+                    // it'll be closed
+                    cooldownCheck: {
+                        if (this.serverEnableTotalExploitCooldown) {
+                            if (!this.timeOutAddressesFromExMsg.contains(newConnection.getInetAddress())) break cooldownCheck;
+                            newConnection.close();
+                        }
+                    }
+
+                    if(!newConnection.isClosed()) this.processConnection(newConnection);
                 } catch (IOException e) {
                     this.logError(e.getMessage());
                 }
@@ -144,24 +147,29 @@ public class WatchCatProxy extends ProxyServer implements Runnable {
                     getLogger().log(LogLevel.WARNING, "Connection at " + conn.getInetAddress().getHostAddress() + " has disconnected: "
                             + initialHandler.getDisconnectReason());
                 }
-            } catch (IOException | BufferTypeException |
-                     InvocationTargetException | IllegalAccessException e) {
-                this.logError(e.getMessage());
-            }
-            catch (ReadExploitException e) { // Fix exploit
+
+                conn.close();
+            } catch (ReadExploitException e) { // Fix exploit
                 try {
-                    getLogger().log(LogLevel.WARNING, "The connection from " + conn.getInetAddress().getHostAddress() + " has been closed to prevent a server crash!");
+                    if (!checkExploitMessageTimeout(conn))
+                        getLogger().log(LogLevel.WARNING, "The connection from " + conn.getInetAddress().getHostAddress() + " has been closed to prevent a server crash!");
                     conn.close();
                 } catch (IOException ex) {
                     logError(ex.getMessage());
                 }
             }
+            catch (IOException | BufferTypeException |
+                     InvocationTargetException | IllegalAccessException e) {
+                this.logError(e.getMessage());
+            }
         }).start();
     }
 
-    private boolean checkTimeout(Socket socket) {
-        // TODO CHECK IF THE CONNECTION IS IN TIMEOUT AND DO THE OTHER PROCEDURES
-        return true;
+    private boolean checkExploitMessageTimeout(@NotNull Socket socket) {
+        if (this.timeOutAddressesFromExMsg.contains(socket.getInetAddress())) return true;
+        this.timeOutAddressesFromExMsg.add(socket.getInetAddress());
+        getScheduler().runAsyncLater(null, () -> this.timeOutAddressesFromExMsg.remove(socket.getInetAddress()), 10);
+        return false;
     }
 
     private void logError(String message) {
@@ -175,7 +183,7 @@ public class WatchCatProxy extends ProxyServer implements Runnable {
 
     @Override
     public String getVersion() {
-        return (String) ServerProperties.port.get(new JSONObject(this.serverPropertiesJSON)
+        return (String) ServerProperties.port.get(this.serverPropertiesJSONObject
                 .getJSONObject("version"));
     }
 
