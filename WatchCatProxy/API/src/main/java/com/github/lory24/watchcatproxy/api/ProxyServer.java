@@ -1,7 +1,7 @@
 package com.github.lory24.watchcatproxy.api;
 
 import com.github.lory24.watchcatproxy.api.events.EventsManager;
-import com.github.lory24.watchcatproxy.api.logging.Logger;
+import com.github.lory24.watchcatproxy.api.logging.ProxyLogger;
 import com.github.lory24.watchcatproxy.api.plugin.PluginsManager;
 import com.github.lory24.watchcatproxy.api.scheduler.ProxyScheduler;
 import lombok.Getter;
@@ -36,7 +36,7 @@ public abstract class ProxyServer {
      *
      * @return The logger.
      */
-    public abstract Logger getLogger();
+    public abstract ProxyLogger getLogger();
 
     /**
      * Get the plugins' manager. It will manage all the plugins.

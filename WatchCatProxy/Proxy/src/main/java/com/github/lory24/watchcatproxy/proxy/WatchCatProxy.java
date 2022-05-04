@@ -3,11 +3,12 @@ package com.github.lory24.watchcatproxy.proxy;
 import com.github.lory24.watchcatproxy.api.ProxyServer;
 import com.github.lory24.watchcatproxy.api.events.EventsManager;
 import com.github.lory24.watchcatproxy.api.logging.LogLevel;
-import com.github.lory24.watchcatproxy.api.logging.Logger;
+import com.github.lory24.watchcatproxy.proxy.logger.Logger;
 import com.github.lory24.watchcatproxy.api.plugin.PluginsManager;
 import com.github.lory24.watchcatproxy.api.scheduler.ProxyScheduler;
 import com.github.lory24.watchcatproxy.protocol.BufferTypeException;
 import com.github.lory24.watchcatproxy.protocol.ReadExploitException;
+import com.github.lory24.watchcatproxy.proxy.logger.LoggerPrintStream;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONObject;
@@ -39,6 +40,7 @@ public class WatchCatProxy extends ProxyServer implements Runnable {
 
     // Internal server features
     private ServerSocket serverSocket;
+    private LoggerPrintStream loggerPrintStream;
 
     // Server Objects
     private Logger logger;
@@ -62,10 +64,12 @@ public class WatchCatProxy extends ProxyServer implements Runnable {
             // Start the scheduler
             this.scheduler = new CatScheduler();
 
-            // Load the logger
-            logger = new Logger(Logger.generateLoggerLogFile(), "WatchCat");
+            // Load the logger and replace system defaults
+            this.loggerPrintStream = new LoggerPrintStream(System.out);
+            logger = new Logger(Logger.generateLoggerLogFile(), "WatchCat", this.loggerPrintStream);
             this.scheduler.runAsyncRepeat(null, () -> this.logger.saveLogger(), 60); // Save the logger every 60 ticks (3s)
             getLogger().log(LogLevel.INFO, "Logger enabled!");
+            System.setErr(this.loggerPrintStream);
 
             // Load server properties
             this.serverProperties = new File("server-properties.json");

@@ -28,6 +28,13 @@ public record HandshakeResult(@Getter int protocolVersion, @Getter String server
         LOGIN(0x02),
 
         /**
+         * This is a custom handshake state. It will be used to initialize a remote server management session. When a
+         * connection with this state is created, all the packets will be sent in JSON format. The sequence is this:
+         * LENGTH - DATA
+         */
+        WEBPANEL_ACTION(0x04),
+
+        /**
          * In the Minecraft protocol, this value is represented by the number 0x01
          */
         STATUS(0x01);
