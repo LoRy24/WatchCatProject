@@ -107,7 +107,7 @@ public class PacketBuffer {
 
 
     public void writeVarIntToBuffer(VarInt input) throws BufferTypeException {
-        this.writeBytes(input.buffer.getBufferBytes());
+        this.writeBytes(input.varIntBuffer.getBufferBytes());
     }
 
     // LONG

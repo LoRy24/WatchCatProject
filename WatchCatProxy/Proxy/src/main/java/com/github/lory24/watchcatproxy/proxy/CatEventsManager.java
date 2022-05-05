@@ -60,9 +60,9 @@ public class CatEventsManager extends EventsManager {
     }
 
     protected void unregisterAllPluginListener(ProxyPlugin plugin) {
-        listeners.forEach((k, v) -> {
-            if (!v.equals(plugin)) return;
-            listeners.remove(k, v);
-        });
+        for(Map.Entry<Listener, ProxyPlugin> entry: this.listeners.entrySet()) {
+            if (!entry.getValue().equals(plugin)) return;
+            listeners.remove(entry.getKey(), entry.getValue());
+        }
     }
 }
