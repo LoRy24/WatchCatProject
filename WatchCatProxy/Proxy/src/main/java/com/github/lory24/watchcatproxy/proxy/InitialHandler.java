@@ -38,12 +38,28 @@ public class InitialHandler {
         this.dataInputStream= new DataInputStream(socket.getInputStream());
     }
 
+    @SuppressWarnings("UnnecessaryBreak")
     public void process()
             throws BufferTypeException, InvocationTargetException, IllegalAccessException,
             ReadExploitException, IOException {
         // Process the handshake state
         if (processHandshakeReceive() == -1) {
             return;
+        }
+
+        // Process the result
+        switch (handshakeResult.getNextState()) {
+
+            case STATUS -> {
+                this.disconnectNoPlayerMessage("Status not supported");
+                break;
+            }
+
+
+            case LOGIN, WEBPANEL_ACTION -> {
+            }
+
+            default -> this.disconnectNoPlayerMessage("Received an unsupported handshake next-state");
         }
     }
 
