@@ -51,7 +51,7 @@ public class InitialHandler {
         switch (handshakeResult.getNextState()) {
 
             case STATUS -> {
-                this.disconnectNoPlayerMessage("Status not supported");
+                processStatus();
                 break;
             }
 
@@ -95,6 +95,10 @@ public class InitialHandler {
         }
 
         return 0;
+    }
+
+    private void processStatus() {
+        disconnectNoPlayerMessage("Status not supported yet!");
     }
 
     /**
