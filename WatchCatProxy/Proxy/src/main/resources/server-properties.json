@@ -8,7 +8,9 @@
     "fakeOnline": {
       "enabled": false,
       "value": 99
-    }
+    },
+    "enableCustomSample": true,
+    "sample": "\n     Another WatchCat Proxy!     \n"
   },
   "port": 25565,
   "serverName": "WatchCat Proxy Server",
