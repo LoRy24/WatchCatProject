@@ -97,10 +97,6 @@ public class ChatComponent {
     @Setter @Getter private HoverEvent              hoverEvent;
     @Getter private final   List<TextChatComponent> extras = new ArrayList<>();
 
-    public void addExtra(TextChatComponent textChatComponent) {
-        this.extras.add(textChatComponent);
-    }
-
     /**
      * Build the extras array list into a json string
      * @return The json
