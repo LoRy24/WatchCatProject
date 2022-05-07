@@ -12,4 +12,13 @@
     <groupId>com.github.lory24.watchcatproxy.proxy</groupId>
     <artifactId>API</artifactId>
     <packaging>jar</packaging>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20211205</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
 </project>
