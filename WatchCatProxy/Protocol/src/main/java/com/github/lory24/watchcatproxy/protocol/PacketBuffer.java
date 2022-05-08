@@ -160,4 +160,22 @@ public class PacketBuffer {
         byte[] bytes = this.readBytes(2);
         return (bytes[1] & 0xFF) << 8 | (bytes[0] & 0xFF);
     }
+
+    // Long
+
+    public void writeLong(long l) throws BufferTypeException {
+        for (int i = Long.BYTES - 1; i >= 0; i--) {
+            writeByte((byte)(l & 0xFF));
+            l >>= Byte.SIZE;
+        }
+    }
+
+    public long readLong() throws ReadExploitException {
+        long result = 0;
+        for (int i = 0; i < Long.BYTES; i++) {
+            result <<= Byte.SIZE;
+            result |= (readByte() & 0xFF);
+        }
+        return result;
+    }
 }

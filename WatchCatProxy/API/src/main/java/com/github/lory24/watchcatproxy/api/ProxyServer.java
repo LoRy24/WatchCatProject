@@ -7,6 +7,9 @@ import com.github.lory24.watchcatproxy.api.scheduler.ProxyScheduler;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.HashMap;
+import java.util.List;
+
 public abstract class ProxyServer {
 
     /**
@@ -52,4 +55,12 @@ public abstract class ProxyServer {
      * @return The instanced scheduler object
      */
     public abstract ProxyScheduler getScheduler();
+
+    /**
+     * This function will return the online proxiedPlayers hashmap. The hashmap has as key the name of the player, and
+     * as object the ProxiedPlayer instance.
+     *
+     * @return The proxiedPlayers list
+     */
+    public abstract HashMap<String, ProxiedPlayer> getProxiedPlayers();
 }

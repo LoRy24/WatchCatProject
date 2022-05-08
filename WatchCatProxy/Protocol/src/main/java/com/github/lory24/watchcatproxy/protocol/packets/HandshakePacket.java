@@ -13,6 +13,16 @@ public class HandshakePacket implements Packet {
     @Getter private int port;
     @Getter private VarInt nextState;
 
+    public HandshakePacket(VarInt protocolVersion, String serverAddress, int port, VarInt nextState) {
+        this.protocolVersion = protocolVersion;
+        this.serverAddress = serverAddress;
+        this.port = port;
+        this.nextState = nextState;
+    }
+
+    public HandshakePacket() {
+    }
+
     @Override
     public void readData(@NotNull PacketBuffer buffer) throws ReadExploitException, BufferTypeException {
         buffer.readVarIntFromBuffer(); // Packet ID

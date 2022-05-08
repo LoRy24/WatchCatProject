@@ -1,6 +1,6 @@
 {
   "version": {
-    "serverVersion": "&dWatchCat Proxy",
+    "serverVersion": "§dWatchCat §7Proxy",
     "protocolVersion": 47
   },
   "players": {
@@ -10,11 +10,11 @@
       "value": 99
     },
     "enableCustomSample": true,
-    "sample": "\n     Another WatchCat Proxy!     \n"
+    "sample": "§f\n     §dAnother WatchCat Proxy!     \n§f"
   },
   "port": 25565,
   "serverName": "WatchCat Proxy Server",
-  "serverMessageOfTheDay": "&dMeow! &fA WatchCat proxy server.",
-  "serverIconName": "default-icon.png",
+  "serverMessageOfTheDay": "§dMeow! §fA WatchCat proxy server.",
+  "serverIconName": "spycat.png",
   "enableExploitTotalCooldown": false
 }

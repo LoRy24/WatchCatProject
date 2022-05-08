@@ -15,6 +15,8 @@ enum ServerProperties {
 
     // Players section
     maxPlayers("maxPlayers"),
+    enableCustomSample("enableCustomSample"),
+    sample("sample"),
 
     // Players -> fakeOnline section
     fakeOnlineEnabled("enabled"),

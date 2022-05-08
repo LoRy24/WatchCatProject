@@ -1,5 +1,6 @@
 package com.github.lory24.watchcatproxy.proxy;
 
+import com.github.lory24.watchcatproxy.api.ProxiedPlayer;
 import com.github.lory24.watchcatproxy.api.ProxyServer;
 import com.github.lory24.watchcatproxy.api.events.EventsManager;
 import com.github.lory24.watchcatproxy.api.logging.LogLevel;
@@ -17,7 +18,9 @@ import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.net.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 
 @SuppressWarnings("FieldCanBeLocal")
 public class WatchCatProxy extends ProxyServer implements Runnable {
@@ -54,6 +57,13 @@ public class WatchCatProxy extends ProxyServer implements Runnable {
     // Exploit notification message timeout
     private final List<InetAddress> timeOutAddressesFromExMsg = new ArrayList<>();
 
+    // Online proxied players
+    private final HashMap<String, ProxiedPlayer> proxiedPlayers = new HashMap<>();
+
+    // Server icon file
+    @Getter
+    private File favIconFile;
+
     {
         this.state = ServerState.STARTING;
     }
@@ -76,6 +86,12 @@ public class WatchCatProxy extends ProxyServer implements Runnable {
             ServerProperties.loadServerPropertiesFile(this.serverProperties, this);
             this.serverPropertiesJSONObject = new JSONObject(ServerProperties.loadFileContent(this.serverProperties));
             this.serverEnableTotalExploitCooldown = (boolean) ServerProperties.serverEnableExploitTotalCooldown.get(this.serverPropertiesJSONObject);
+
+            // Create the default icon file
+            String serverIconName = (String) ServerProperties.serverIconName.get(this.serverPropertiesJSONObject);
+            File defaultFavIconFile = new File("spycat.png");
+            this.favIconFile = !serverIconName.equals("spycat.png")  ? new File(serverIconName) : defaultFavIconFile;
+            this.loadDefaultFavIcon(defaultFavIconFile);
 
             // Instance the events manager
             this.eventsManager = new CatEventsManager();
@@ -142,7 +158,7 @@ public class WatchCatProxy extends ProxyServer implements Runnable {
         new Thread(() -> {
             try {
                 // Initialize the client
-                InitialHandler initialHandler = new InitialHandler(conn);
+                InitialHandler initialHandler = new InitialHandler(conn, this);
                 initialHandler.process();
 
                 // Check if the client has been disconnected
@@ -151,8 +167,6 @@ public class WatchCatProxy extends ProxyServer implements Runnable {
                     getLogger().log(LogLevel.WARNING, "Connection at " + conn.getInetAddress().getHostAddress() + " has disconnected: "
                             + initialHandler.getDisconnectReason());
                 }
-
-                conn.close();
             } catch (ReadExploitException e) { // Fix exploit
                 try {
                     if (!checkExploitMessageTimeout(conn))
@@ -160,11 +174,13 @@ public class WatchCatProxy extends ProxyServer implements Runnable {
                     conn.close();
                 } catch (IOException ex) {
                     logError(ex.getMessage());
+                    ex.printStackTrace();
                 }
             }
             catch (IOException | BufferTypeException |
                      InvocationTargetException | IllegalAccessException e) {
                 this.logError(e.getMessage());
+                e.printStackTrace();
             }
         }).start();
     }
@@ -174,6 +190,17 @@ public class WatchCatProxy extends ProxyServer implements Runnable {
         this.timeOutAddressesFromExMsg.add(socket.getInetAddress());
         getScheduler().runAsyncLater(null, () -> this.timeOutAddressesFromExMsg.remove(socket.getInetAddress()), 10);
         return false;
+    }
+
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    private void loadDefaultFavIcon(@NotNull File defaultFavIconFile) throws IOException {
+        if (!defaultFavIconFile.exists()) {
+            defaultFavIconFile.createNewFile();
+            FileOutputStream fileOutputStream = new FileOutputStream(defaultFavIconFile);
+            InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream("spycat.png");
+            fileOutputStream.write(Objects.requireNonNull(inputStream).readAllBytes());
+            fileOutputStream.flush(); fileOutputStream.close();
+        }
     }
 
     private void logError(String message) {
@@ -204,5 +231,10 @@ public class WatchCatProxy extends ProxyServer implements Runnable {
     @Override
     public ProxyScheduler getScheduler() {
         return this.scheduler;
+    }
+
+    @Override
+    public HashMap<String, ProxiedPlayer>  getProxiedPlayers() {
+        return this.proxiedPlayers;
     }
 }
