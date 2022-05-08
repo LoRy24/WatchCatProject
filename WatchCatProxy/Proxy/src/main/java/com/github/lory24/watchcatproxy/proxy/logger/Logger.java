@@ -70,7 +70,7 @@ public class Logger extends ProxyLogger {
         // Create the log file
         Date date = new Date(); // used to create the file
         final File logFile = new File(logsFolder.getAbsolutePath(), String.format("LOG_%d-%02.0f-%d # %02.0f-%02.0f-%02.0f.txt", date.getDate(),
-                (float) date.getMonth(), date.getYear() + 1900, (float) date.getHours(), (float) date.getMinutes(),
+                (float) date.getMonth() + 1, date.getYear() + 1900, (float) date.getHours(), (float) date.getMinutes(),
                 (float) date.getSeconds()));
         logFile.createNewFile();
         return logFile;
