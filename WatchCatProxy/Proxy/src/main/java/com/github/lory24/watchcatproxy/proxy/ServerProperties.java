@@ -28,6 +28,10 @@ enum ServerProperties {
     serverMessageOfTheDay("serverMessageOfTheDay"),
     serverIconName("serverIconName"),
     serverEnableExploitTotalCooldown("enableExploitTotalCooldown"),
+
+    // SubServers settings
+    serversArray("servers"),
+    serverDefaultServer("defaultServer")
     ;
 
     @SuppressWarnings("resource")

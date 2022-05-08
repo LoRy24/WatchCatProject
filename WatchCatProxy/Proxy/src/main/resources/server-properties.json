@@ -10,11 +10,19 @@
       "value": 0
     },
     "enableCustomSample": true,
-    "sample": "§f\n     §dAnother WatchCat Proxy!     \n§8Made by LoRy24\n§f"
+    "sample": "§f\n   §dAnother WatchCat Proxy!   \n   §8Made by LoRy24\n§f"
   },
+  "servers": [
+    {
+      "name": "lobby",
+      "address": "localhost",
+      "port": 25566
+    }
+  ],
   "port": 25565,
   "serverName": "WatchCat Proxy Server",
   "serverMessageOfTheDay": "§dMeow! §fA WatchCat proxy server.",
   "serverIconName": "spycat.png",
-  "enableExploitTotalCooldown": false
+  "enableExploitTotalCooldown": false,
+  "defaultServer": "lobby"
 }
