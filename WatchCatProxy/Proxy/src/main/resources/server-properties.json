@@ -7,10 +7,10 @@
     "maxPlayers": 100,
     "fakeOnline": {
       "enabled": false,
-      "value": 99
+      "value": 0
     },
     "enableCustomSample": true,
-    "sample": "§f\n     §dAnother WatchCat Proxy!     \n§f"
+    "sample": "§f\n     §dAnother WatchCat Proxy!     \n§8Made by LoRy24\n§f"
   },
   "port": 25565,
   "serverName": "WatchCat Proxy Server",
