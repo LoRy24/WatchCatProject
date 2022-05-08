@@ -4,6 +4,7 @@ import com.github.lory24.watchcatproxy.api.ProxiedPlayer;
 import com.github.lory24.watchcatproxy.api.ProxyServer;
 import com.github.lory24.watchcatproxy.api.events.EventsManager;
 import com.github.lory24.watchcatproxy.api.logging.LogLevel;
+import com.github.lory24.watchcatproxy.proxy.connection.SubServerInfo;
 import com.github.lory24.watchcatproxy.proxy.logger.Logger;
 import com.github.lory24.watchcatproxy.api.plugin.PluginsManager;
 import com.github.lory24.watchcatproxy.api.scheduler.ProxyScheduler;
@@ -12,6 +13,7 @@ import com.github.lory24.watchcatproxy.protocol.ReadExploitException;
 import com.github.lory24.watchcatproxy.proxy.logger.LoggerPrintStream;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.*;
@@ -57,8 +59,12 @@ public class WatchCatProxy extends ProxyServer implements Runnable {
     // Exploit notification message timeout
     private final List<InetAddress> timeOutAddressesFromExMsg = new ArrayList<>();
 
-    // Online proxied players
+    // Proxied core
     private final HashMap<String, ProxiedPlayer> proxiedPlayers = new HashMap<>();
+
+    @Getter
+    private HashMap<String, SubServerInfo> servers;
+    private String defaultServerName;
 
     // Server icon file
     @Getter
@@ -86,12 +92,20 @@ public class WatchCatProxy extends ProxyServer implements Runnable {
             ServerProperties.loadServerPropertiesFile(this.serverProperties, this);
             this.serverPropertiesJSONObject = new JSONObject(ServerProperties.loadFileContent(this.serverProperties));
             this.serverEnableTotalExploitCooldown = (boolean) ServerProperties.serverEnableExploitTotalCooldown.get(this.serverPropertiesJSONObject);
+            getLogger().log(LogLevel.INFO, "Server properties loaded!");
+
+            // Load the servers data
+            this.servers = new HashMap<>();
+            this.loadSubServers();
+            this.defaultServerName = (String) ServerProperties.serverDefaultServer.get(this.serverPropertiesJSONObject);
+            getLogger().log(LogLevel.INFO, "Proxy's sub servers have been loaded! Default server: " + this.defaultServerName);
 
             // Create the default icon file
             String serverIconName = (String) ServerProperties.serverIconName.get(this.serverPropertiesJSONObject);
             File defaultFavIconFile = new File("spycat.png");
             this.favIconFile = !serverIconName.equals("spycat.png")  ? new File(serverIconName) : defaultFavIconFile;
             this.loadDefaultFavIcon(defaultFavIconFile);
+            getLogger().log(LogLevel.INFO, "Default proxy icon loaded!");
 
             // Instance the events manager
             this.eventsManager = new CatEventsManager();
@@ -166,7 +180,18 @@ public class WatchCatProxy extends ProxyServer implements Runnable {
                     if (!conn.isClosed()) conn.close();
                     getLogger().log(LogLevel.WARNING, "Connection at " + conn.getInetAddress().getHostAddress() + " has disconnected: "
                             + initialHandler.getDisconnectReason());
+                    return;
                 }
+
+                // If the client is in the play status, it's time to start the proxiedConnection
+                if (initialHandler.getState().equals(InitializationState.LOGIN)) {
+                    // TODO this
+                    // Instance the proxied player
+                    // Wait for the connection to disconnect
+                    // Do the disconnect actions
+                    this.getLogger().log(LogLevel.ERROR, "Login request received.");
+                }
+
             } catch (ReadExploitException e) { // Fix exploit
                 try {
                     if (!checkExploitMessageTimeout(conn))
@@ -200,6 +225,15 @@ public class WatchCatProxy extends ProxyServer implements Runnable {
             InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream("spycat.png");
             fileOutputStream.write(Objects.requireNonNull(inputStream).readAllBytes());
             fileOutputStream.flush(); fileOutputStream.close();
+        }
+    }
+
+    private void loadSubServers() {
+        JSONArray serversJsonArray = this.serverPropertiesJSONObject.getJSONArray("servers");
+        for (int i = 0; i < serversJsonArray.length(); i++) {
+            String serverName = serversJsonArray.getJSONObject(i).getString("name"), serverAddress = serversJsonArray.getJSONObject(i).getString("address");
+            int serverPort = serversJsonArray.getJSONObject(i).getInt("port");
+            this.servers.put(serverName, new SubServerInfo(serverName, serverAddress, serverPort));
         }
     }
 
