@@ -27,4 +27,25 @@ public class VarIntUtil {
 
         return new VarInt(value);
     }
+
+    @Contract("_, _ -> new")
+    @NotNull
+    public static VarInt readEncryptedVarInt(@NotNull DataInputStream dataInputStream, @NotNull EncryptionUtil encryptionUtil) throws IOException,
+            BufferTypeException {
+        int value = 0, length = 0;
+        byte current;
+
+        do {
+            current = dataInputStream.readByte();
+            current = encryptionUtil.decryptByte(current);
+            value |= (current & 127) << length++ * 7;
+
+            if (length > 5) {
+                throw new RuntimeException("VarInt too big");
+            }
+        }
+        while ((current & 128) == 128);
+
+        return new VarInt(value);
+    }
 }

@@ -28,6 +28,7 @@ enum ServerProperties {
     serverMessageOfTheDay("serverMessageOfTheDay"),
     serverIconName("serverIconName"),
     serverEnableExploitTotalCooldown("enableExploitTotalCooldown"),
+    serverOnlineMode("onlineMode"),
 
     // SubServers settings
     serversArray("servers"),

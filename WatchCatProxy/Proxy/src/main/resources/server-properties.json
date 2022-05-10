@@ -24,5 +24,6 @@
   "serverMessageOfTheDay": "§dMeow! §fA WatchCat proxy server.",
   "serverIconName": "spycat.png",
   "enableExploitTotalCooldown": false,
-  "defaultServer": "lobby"
+  "defaultServer": "lobby",
+  "onlineMode": false
 }

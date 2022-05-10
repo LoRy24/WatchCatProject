@@ -65,7 +65,12 @@ public class InitialHandler {
             }
 
 
-            case LOGIN, WEBPANEL_ACTION -> {
+            case LOGIN -> {
+
+            }
+
+            case WEBPANEL_ACTION -> {
+
             }
 
             default -> this.disconnectNoPlayerMessage("Received an unsupported handshake next-state");
