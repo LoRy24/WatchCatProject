@@ -1,7 +1,12 @@
 package com.github.lory24.watchcatproxy.proxy.connection;
 
 import com.github.lory24.watchcatproxy.api.ProxiedPlayer;
+import com.github.lory24.watchcatproxy.api.chatcomponent.TextChatComponent;
+import com.github.lory24.watchcatproxy.api.logging.LogLevel;
+import com.github.lory24.watchcatproxy.protocol.BufferTypeException;
 import com.github.lory24.watchcatproxy.protocol.EncryptionUtil;
+import com.github.lory24.watchcatproxy.protocol.VersionsUtils;
+import com.github.lory24.watchcatproxy.protocol.packets.PlayDisconnectPacket;
 import com.github.lory24.watchcatproxy.proxy.WatchCatProxy;
 
 import java.io.IOException;
@@ -12,7 +17,7 @@ public class CatProxiedPlayer extends ProxiedPlayer {
     private final String username;
     private final UUID uuid;
     private final boolean isInOnlineMode;
-    private final ProxiedConnection proxiedConnection;
+    public final ProxiedConnection proxiedConnection;
 
     // Proxy instance
     private final WatchCatProxy proxy;
@@ -22,12 +27,35 @@ public class CatProxiedPlayer extends ProxiedPlayer {
                             boolean isInOnlineMode,
                             Socket socket,
                             WatchCatProxy proxy,
-                            EncryptionUtil encryptionUtil) {
+                            EncryptionUtil encryptionUtil,
+                            boolean compressionEnabled) {
         this.username = username;
         this.uuid = uuid;
         this.isInOnlineMode = isInOnlineMode;
-        this.proxiedConnection = new ProxiedConnection(socket, this, proxy, this.isInOnlineMode, encryptionUtil);
+        this.proxiedConnection = new ProxiedConnection(socket, this, proxy, this.isInOnlineMode, encryptionUtil, compressionEnabled);
         this.proxy = proxy;
+    }
+
+    public void connect(SubServerInfo serverInfo)
+            throws IOException, BufferTypeException {
+        SubServerInitialHandler subServerInitialHandler = new SubServerInitialHandler(this);
+        subServerInitialHandler.initializeConnectionToSubServer(serverInfo);
+
+        if (subServerInitialHandler.getServerConn() == null) {
+            this.disconnect("§cUnable to connect to the server " + serverInfo.getName() + "!");
+            this.proxy.getLogger().log(LogLevel.ERROR, "[InitialHandler : " + proxiedConnection.getSocket().getInetAddress().getHostAddress() + ":" + proxiedConnection.getSocket().getPort()
+                    + " -> " + serverInfo.getName() + "] Error while connecting to the server! Disconnecting the player...");
+            return;
+        }
+
+        this.proxiedConnection.setSubServerActiveConnection(subServerInitialHandler.getServerConn());
+        this.proxiedConnection.setConnectedServer(serverInfo);
+    }
+
+    @Deprecated
+    public void connect(String name, String host, int port) throws IOException,
+            BufferTypeException {
+        this.connect(new SubServerInfo(name, host, port));
     }
 
     @Override
@@ -46,9 +74,9 @@ public class CatProxiedPlayer extends ProxiedPlayer {
     }
 
     @Override
-    public void disconnect(String reason) throws IOException {
-        // SEND PLAY DISCONNECT PACKET
+    public void disconnect(String reason) throws IOException, BufferTypeException {
+        this.proxiedConnection.sendPacketToClient(new PlayDisconnectPacket(VersionsUtils.getPlayDisconnectPacketID(47),
+                new TextChatComponent(reason).buildTextChatComponent()));
         this.proxiedConnection.killConnection();
-        this.proxy.getProxiedPlayers().remove(this.getUsername());
     }
 }

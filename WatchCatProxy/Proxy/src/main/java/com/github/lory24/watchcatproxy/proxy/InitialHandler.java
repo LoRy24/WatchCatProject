@@ -1,17 +1,17 @@
 package com.github.lory24.watchcatproxy.proxy;
 
-import com.github.lory24.watchcatproxy.api.ChatComponent;
 import com.github.lory24.watchcatproxy.api.ProxyServer;
+import com.github.lory24.watchcatproxy.api.chatcomponent.TextChatComponent;
+import com.github.lory24.watchcatproxy.api.events.data.PreLoginData;
 import com.github.lory24.watchcatproxy.api.events.defaults.HandshakeReceivedEvent;
+import com.github.lory24.watchcatproxy.api.events.defaults.PreLoginEvent;
 import com.github.lory24.watchcatproxy.api.events.defaults.ServerListPingEvent;
 import com.github.lory24.watchcatproxy.api.logging.LogLevel;
 import com.github.lory24.watchcatproxy.api.results.HandshakeResult;
+import com.github.lory24.watchcatproxy.api.results.LoginResult;
 import com.github.lory24.watchcatproxy.api.status.ProxyServerStatus;
 import com.github.lory24.watchcatproxy.protocol.*;
-import com.github.lory24.watchcatproxy.protocol.packets.HandshakePacket;
-import com.github.lory24.watchcatproxy.protocol.packets.Packet;
-import com.github.lory24.watchcatproxy.protocol.packets.StatusPingPongPacket;
-import com.github.lory24.watchcatproxy.protocol.packets.StatusResponsePacket;
+import com.github.lory24.watchcatproxy.protocol.packets.*;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,6 +20,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 
 public class InitialHandler {
     @Getter
@@ -37,6 +39,9 @@ public class InitialHandler {
     // API values
     @Getter
     private HandshakeResult handshakeResult;
+
+    @Getter
+    private LoginResult loginResult;
 
     // References
     private final WatchCatProxy proxy;
@@ -66,7 +71,8 @@ public class InitialHandler {
 
 
             case LOGIN -> {
-
+                processLogin();
+                break;
             }
 
             case WEBPANEL_ACTION -> {
@@ -75,6 +81,56 @@ public class InitialHandler {
 
             default -> this.disconnectNoPlayerMessage("Received an unsupported handshake next-state");
         }
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    private void processLogin() throws InvocationTargetException, IllegalAccessException, IOException, BufferTypeException, ReadExploitException {
+        // Call the preLoginEvent
+        final PreLoginData preLoginData = new PreLoginData((boolean) ServerProperties.serverOnlineMode.get(this.proxy.getServerPropertiesJSONObject()));
+        PreLoginEvent preLoginEvent = new PreLoginEvent(preLoginData);
+        this.proxy.getEventsManager().fireEvent(PreLoginEvent.class, preLoginEvent);
+        if (preLoginEvent.isCancelled()) {
+            disconnectLogin("§cLogin cancelled!");
+            return;
+        }
+
+        // Read the login start packet
+        PacketBuffer loginStartPacketBuffer = this.secureReadPacketBuffer();
+        if (loginStartPacketBuffer == null) {
+            disconnectLogin("§cInvalid login state!");
+            return;
+        }
+        LoginStartPacket loginStartPacket = new LoginStartPacket();
+        loginStartPacket.readData(loginStartPacketBuffer);
+
+        // Check if the online mode is enabled, and if it is, do the EncryptionProcess
+        if (preLoginData.enableOnlineMode()) {
+            disconnectLogin("§cOnline Mode not supported!");
+            return;
+        }
+
+        // SET COMPRESSION - NOT FOR NOW
+
+        // Check if a user with that username is already connected
+        if (this.proxy.getProxiedPlayers().containsKey(loginStartPacket.getUsername())) {
+            disconnectLogin("§cA player with that username is already connected to the server!");
+            this.state = InitializationState.DISCONNECTED;
+            return;
+        }
+
+        // Login success packet
+        this.loginResult = new LoginResult(preLoginData.enableOnlineMode(), false, loginStartPacket.getUsername(), UUID.nameUUIDFromBytes(("OfflinePlayer:" + loginStartPacket
+                .getUsername()).getBytes(StandardCharsets.UTF_8)));
+        LoginSuccessPacket loginSuccessPacket = new LoginSuccessPacket(loginResult.username(), loginResult.uuid());
+        this.sendInitializationSimplePacket(loginSuccessPacket);
+
+        // End the login process
+        this.state = InitializationState.LOGIN;
+
+        // Notify the login success
+        this.proxy.getLogger().log(LogLevel.INFO, "[InitialHandler -> " + this.socket.getInetAddress().getHostAddress() + ":" + this.socket.getPort() +
+                "] User " + loginResult.username() + " with uuid " + loginResult.uuid() + " has connected to the proxy. Redirecting to default server '" +
+                ServerProperties.serverDefaultServer.get(this.proxy.getServerPropertiesJSONObject()) + "'");
     }
 
     private int processHandshakeReceive()
@@ -91,8 +147,8 @@ public class InitialHandler {
         // Read the HandshakePacket and put the data into an object
         HandshakePacket handshakePacket = new HandshakePacket();
         handshakePacket.readData(handshakeBuffer);
-        this.handshakeResult = new HandshakeResult(handshakePacket.getProtocolVersion().toInteger(), handshakePacket.getServerAddress(), handshakePacket.getPort(),
-                HandshakeResult.HandshakeNextState.convertIntegerToState(handshakePacket.getNextState().toInteger()));
+        this.handshakeResult = new HandshakeResult(handshakePacket.getProtocolVersion().intValue(), handshakePacket.getServerAddress(), handshakePacket.getPort(),
+                HandshakeResult.HandshakeNextState.convertIntegerToState(handshakePacket.getNextState().intValue()));
 
         // Check for exploited packet
         ExploitUtils.checkBufferExploits(handshakeBuffer);
@@ -138,7 +194,7 @@ public class InitialHandler {
                                 .getJSONObject("players"))).replace("&", "\u00a7")) : ProxyServerStatus.StatusPlayers.buildSampleFromPlayersHashMap(this.proxy.getProxiedPlayers())
                 ),
                 // Description object
-                new ChatComponent.TextChatComponent(((String) ServerProperties.serverMessageOfTheDay.get(proxy.getServerPropertiesJSONObject()))
+                new TextChatComponent(((String) ServerProperties.serverMessageOfTheDay.get(proxy.getServerPropertiesJSONObject()))
                         .replace("&", "\u00a7")),
                 // The icon
                 new ProxyServerStatus.FavIcon(this.proxy.getFavIconFile())
@@ -196,8 +252,8 @@ public class InitialHandler {
     public PacketBuffer secureReadPacketBuffer() throws IOException, BufferTypeException {
         DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
         VarInt length = VarIntUtil.readVarInt(dataInputStream);
-        if (length.toInteger() <= 0) return null;
-        return new PacketBuffer(dataInputStream.readNBytes(length.toInteger()));
+        if (length.intValue() <= 0) return null;
+        return new PacketBuffer(dataInputStream.readNBytes(length.intValue()));
     }
 
     public void sendInitializationSimplePacket(@NotNull Packet packet)
@@ -206,6 +262,7 @@ public class InitialHandler {
         packet.writeData(packetBuffer);
         this.dataOutputStream.write(new VarInt(packetBuffer.getBufferBytes().length).varIntBuffer.getBufferBytes());
         this.dataOutputStream.write(packetBuffer.getBufferBytes());
+        //this.proxy.getLogger().log(LogLevel.INFO, "bytes: " +  packetBuffer.getBufferBytes());
     }
 
     @SuppressWarnings("SameParameterValue")
@@ -217,5 +274,12 @@ public class InitialHandler {
         } catch (IOException e) {
             ProxyServer.getInstance().getLogger().log(LogLevel.ERROR, "An error was occurred while disconnecting the socket! Error: " + e.getMessage());
         }
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    private void disconnectLogin(String disconnectMessage) throws IOException, BufferTypeException {
+        this.sendInitializationSimplePacket(new LoginDisconnectPacket(new TextChatComponent(disconnectMessage).buildTextChatComponent()));
+        disconnectNoPlayerMessage("Error during the Login state: " + disconnectMessage);
+        this.state = InitializationState.DISCONNECTED_LOGIN;
     }
 }

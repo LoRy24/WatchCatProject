@@ -4,6 +4,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.UUID;
 
 @SuppressWarnings("unused")
 public class PacketBuffer {
@@ -145,7 +146,7 @@ public class PacketBuffer {
     }
 
     public void writeUTFString(@NotNull String s) throws BufferTypeException {
-        this.writeVarIntToBuffer(new VarInt(s.length()));
+        this.writeVarIntToBuffer(new VarInt(s.getBytes(StandardCharsets.UTF_8).length));
         this.writeBytes(s.getBytes(StandardCharsets.UTF_8));
     }
 
@@ -177,5 +178,16 @@ public class PacketBuffer {
             result |= (readByte() & 0xFF);
         }
         return result;
+    }
+
+    // UUID
+
+    public UUID readUUID() throws ReadExploitException {
+        return new UUID(this.readLong(), this.readLong());
+    }
+
+    public void writeUUID(@NotNull UUID uuid) throws BufferTypeException {
+        this.writeLong(uuid.getMostSignificantBits());
+        this.writeLong(uuid.getLeastSignificantBits());
     }
 }

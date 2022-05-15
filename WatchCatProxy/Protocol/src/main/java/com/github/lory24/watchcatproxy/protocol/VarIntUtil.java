@@ -36,8 +36,7 @@ public class VarIntUtil {
         byte current;
 
         do {
-            current = dataInputStream.readByte();
-            current = encryptionUtil.decryptByte(current);
+            current = encryptionUtil.decryptByte(dataInputStream.readByte());
             value |= (current & 127) << length++ * 7;
 
             if (length > 5) {

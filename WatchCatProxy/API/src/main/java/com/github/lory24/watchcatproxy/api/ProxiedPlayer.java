@@ -23,5 +23,5 @@ public abstract class ProxiedPlayer {
     /**
      * This function will disconnect a player from the server with a reason
      */
-    public abstract void disconnect(String reason) throws IOException;
+    public abstract void disconnect(String reason) throws Exception;
 }

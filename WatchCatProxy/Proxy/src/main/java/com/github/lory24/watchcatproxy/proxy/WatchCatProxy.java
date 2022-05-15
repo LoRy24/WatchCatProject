@@ -4,6 +4,7 @@ import com.github.lory24.watchcatproxy.api.ProxiedPlayer;
 import com.github.lory24.watchcatproxy.api.ProxyServer;
 import com.github.lory24.watchcatproxy.api.events.EventsManager;
 import com.github.lory24.watchcatproxy.api.logging.LogLevel;
+import com.github.lory24.watchcatproxy.proxy.connection.CatProxiedPlayer;
 import com.github.lory24.watchcatproxy.proxy.connection.SubServerInfo;
 import com.github.lory24.watchcatproxy.proxy.logger.Logger;
 import com.github.lory24.watchcatproxy.api.plugin.PluginsManager;
@@ -70,6 +71,10 @@ public class WatchCatProxy extends ProxyServer implements Runnable {
     @Getter
     private File favIconFile;
 
+    // Cooldown
+    @Getter
+    private final List<InetAddress> cooldownAddresses = new ArrayList<>();
+
     {
         this.state = ServerState.STARTING;
     }
@@ -84,8 +89,8 @@ public class WatchCatProxy extends ProxyServer implements Runnable {
             this.loggerPrintStream = new LoggerPrintStream(System.out);
             logger = new Logger(Logger.generateLoggerLogFile(), "WatchCat", this.loggerPrintStream);
             this.scheduler.runAsyncRepeat(null, () -> this.logger.saveLogger(), 60); // Save the logger every 60 ticks (3s)
-            getLogger().log(LogLevel.INFO, "Logger enabled!");
             System.setErr(this.loggerPrintStream);
+            getLogger().log(LogLevel.INFO, "Logger enabled!");
 
             // Load server properties
             this.serverProperties = new File("server-properties.json");
@@ -109,7 +114,6 @@ public class WatchCatProxy extends ProxyServer implements Runnable {
 
             // Instance the events manager
             this.eventsManager = new CatEventsManager();
-            getLogger().log(LogLevel.INFO, "Events manager has been loaded! Loading plugins, wait.");
 
             // Load the plugins
             this.pluginsManager = new CatPluginsManager(this);
@@ -146,7 +150,7 @@ public class WatchCatProxy extends ProxyServer implements Runnable {
                     Socket newConnection = this.serverSocket.accept();
 
                     // Check if the connection is blocked
-                    if (this.blockedAddresses.contains(newConnection.getInetAddress())) {
+                    if (this.blockedAddresses.contains(newConnection.getInetAddress()) || this.isInCooldown(newConnection)) {
                         newConnection.close();
                         continue;
                     }
@@ -155,7 +159,8 @@ public class WatchCatProxy extends ProxyServer implements Runnable {
                     // it'll be closed
                     cooldownCheck: {
                         if (this.serverEnableTotalExploitCooldown) {
-                            if (!this.timeOutAddressesFromExMsg.contains(newConnection.getInetAddress())) break cooldownCheck;
+                            if (!this.timeOutAddressesFromExMsg.contains(newConnection.getInetAddress()))
+                                break cooldownCheck;
                             newConnection.close();
                         }
                     }
@@ -183,12 +188,21 @@ public class WatchCatProxy extends ProxyServer implements Runnable {
                     return;
                 }
 
+                // Check if the client has been disconnected during the Login state
+                if (initialHandler.getState().equals(InitializationState.DISCONNECTED_LOGIN)) {
+                    if (!conn.isClosed()) conn.close();
+                    getLogger().log(LogLevel.ERROR, "Connection at " + conn.getInetAddress().getHostAddress() + "has been disconnected during login state. The connection is now in cooldown");
+                    this.putInCooldown(conn);
+                    return;
+                }
+
                 // If the client is in the play status, it's time to start the proxiedConnection
                 if (initialHandler.getState().equals(InitializationState.LOGIN)) {
-                    // TODO this
-                    // Instance the proxied player
-                    // Wait for the connection to disconnect
-                    // Do the disconnect actions
+                    // Encryption and compression are disabled
+                    CatProxiedPlayer catProxiedPlayer = new CatProxiedPlayer(initialHandler.getLoginResult().username(), initialHandler.getLoginResult().uuid(), initialHandler.getLoginResult().onlineMode(), conn, this,
+                            null, false);
+                    catProxiedPlayer.proxiedConnection.runPacketsReplier(this.getServers().get(this.defaultServerName));
+                    this.proxiedPlayers.put(initialHandler.getLoginResult().username(), catProxiedPlayer);
                     this.getLogger().log(LogLevel.ERROR, "Login request received.");
                 }
 
@@ -215,6 +229,16 @@ public class WatchCatProxy extends ProxyServer implements Runnable {
         this.timeOutAddressesFromExMsg.add(socket.getInetAddress());
         getScheduler().runAsyncLater(null, () -> this.timeOutAddressesFromExMsg.remove(socket.getInetAddress()), 10);
         return false;
+    }
+
+    private void putInCooldown(@NotNull Socket socket) {
+        if (!this.cooldownAddresses.contains(socket.getInetAddress())) this.cooldownAddresses.add(socket.getInetAddress());
+        this.getScheduler().runAsyncLater(null, () ->
+                this.cooldownAddresses.remove(socket.getInetAddress()), 200);
+    }
+
+    private boolean isInCooldown(@NotNull Socket socket) {
+        return this.cooldownAddresses.contains(socket.getInetAddress());
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")

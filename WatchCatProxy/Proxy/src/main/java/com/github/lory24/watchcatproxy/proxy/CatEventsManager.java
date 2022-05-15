@@ -1,9 +1,11 @@
 package com.github.lory24.watchcatproxy.proxy;
 
+import com.github.lory24.watchcatproxy.api.ProxyServer;
 import com.github.lory24.watchcatproxy.api.events.Event;
 import com.github.lory24.watchcatproxy.api.events.EventListener;
 import com.github.lory24.watchcatproxy.api.events.EventsManager;
 import com.github.lory24.watchcatproxy.api.events.Listener;
+import com.github.lory24.watchcatproxy.api.logging.LogLevel;
 import com.github.lory24.watchcatproxy.api.plugin.ProxyPlugin;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,6 +16,10 @@ import java.util.*;
 public class CatEventsManager extends EventsManager {
 
     private final HashMap<Listener, ProxyPlugin> listeners = new HashMap<>();
+
+    public CatEventsManager() {
+        ProxyServer.getInstance().getLogger().log(LogLevel.INFO, "Events manager has been loaded! Loading plugins, wait.");
+    }
 
     @Override
     public void registerEvents(@NotNull Listener listener, ProxyPlugin plugin) {

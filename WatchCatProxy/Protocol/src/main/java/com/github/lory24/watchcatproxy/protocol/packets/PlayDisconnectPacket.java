@@ -9,27 +9,28 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-public class StatusPingPongPacket implements Packet {
+public class PlayDisconnectPacket implements Packet {
 
-    @Getter
-    private long payload;
+    @Getter private int ID;
+    @Getter private String chatComponentJSON;
 
-    public StatusPingPongPacket(long payload) {
-        this.payload = payload;
+    public PlayDisconnectPacket(int ID, String chatComponentJSON) {
+        this.ID = ID;
+        this.chatComponentJSON = chatComponentJSON;
     }
 
-    public StatusPingPongPacket() {
+    public PlayDisconnectPacket() {
     }
 
     @Override
     public void readData(@NotNull PacketBuffer buffer) throws BufferTypeException, ReadExploitException {
-        buffer.readVarIntFromBuffer(); // the packet ID
-        this.payload = buffer.readLong();
+        this.ID = buffer.readVarIntFromBuffer().intValue();
+        this.chatComponentJSON = buffer.readUTF8String();
     }
 
     @Override
     public void writeData(@NotNull PacketBuffer buffer) throws BufferTypeException, IOException {
-        buffer.writeVarIntToBuffer(new VarInt(0x01));
-        buffer.writeLong(payload);
+        buffer.writeVarIntToBuffer(new VarInt(this.ID));
+        buffer.writeUTFString(this.chatComponentJSON);
     }
 }
