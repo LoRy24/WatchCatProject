@@ -4,6 +4,10 @@ import javax.crypto.SecretKey;
 
 public record EncryptionUtil(SecretKey aesSecret) {
 
+    public byte[] encryptAllBytes(byte[] b) {
+        return null;
+    }
+
     public byte encryptByte(byte b) {
         return b;
     }
