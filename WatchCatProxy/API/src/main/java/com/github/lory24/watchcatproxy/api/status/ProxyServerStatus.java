@@ -1,7 +1,7 @@
 package com.github.lory24.watchcatproxy.api.status;
 
-import com.github.lory24.watchcatproxy.api.ChatComponent;
 import com.github.lory24.watchcatproxy.api.ProxiedPlayer;
+import com.github.lory24.watchcatproxy.api.chatcomponent.TextChatComponent;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.Contract;
@@ -23,7 +23,7 @@ import java.util.UUID;
  * @param description The description ChatComponent field
  * @param favIcon     The favicon field
  */
-public record ProxyServerStatus(@Getter @Setter ProxyServerStatus.StatusVersion version, @Getter @Setter ProxyServerStatus.StatusPlayers players, @Getter @Setter ChatComponent.TextChatComponent description,
+public record ProxyServerStatus(@Getter @Setter ProxyServerStatus.StatusVersion version, @Getter @Setter ProxyServerStatus.StatusPlayers players, @Getter @Setter TextChatComponent description,
                                 @Getter @Setter ProxyServerStatus.FavIcon favIcon) {
 
     /**
