@@ -140,7 +140,7 @@ public class PacketBuffer {
     // UTF-8 STRING
 
     public String readUTF8String() throws ReadExploitException, BufferTypeException {
-        int length = this.readVarIntFromBuffer().toInteger();
+        int length = this.readVarIntFromBuffer().intValue();
         return new String(readBytes(length), StandardCharsets.UTF_8);
     }
 
