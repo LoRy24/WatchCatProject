@@ -42,9 +42,9 @@ public class CatProxiedPlayer extends ProxiedPlayer {
         subServerInitialHandler.initializeConnectionToSubServer(serverInfo);
 
         if (subServerInitialHandler.getServerConn() == null) {
-            this.disconnect("§cUnable to connect to the server " + serverInfo.getName() + "!");
+            this.disconnect("§cUnable to connect to the server " + serverInfo.name() + "!");
             this.proxy.getLogger().log(LogLevel.ERROR, "[InitialHandler : " + proxiedConnection.getSocket().getInetAddress().getHostAddress() + ":" + proxiedConnection.getSocket().getPort()
-                    + " -> " + serverInfo.getName() + "] Error while connecting to the server! Disconnecting the player...");
+                    + " -> " + serverInfo.name() + "] Error while connecting to the server! Disconnecting the player...");
             return;
         }
 

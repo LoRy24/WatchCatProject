@@ -52,6 +52,7 @@ public class ProxiedConnection {
     public void runPacketsReplier(SubServerInfo defaultServer) throws IOException, BufferTypeException {
         this.setConnectedServer(defaultServer);
         this.catProxiedPlayer.connect(this.connectedServer);
+        if (!isStillConnected) return;
         startConnectedCheckThread();
         this.packetReplierTask = new Thread(() -> {
             try {
@@ -73,7 +74,7 @@ public class ProxiedConnection {
     }
 
     public void startConnectedCheckThread() {
-        while (true) {
+        while (isStillConnected) {
             try {
                 if (socket.getInputStream().read() == -1) {
                     this.isStillConnected = false;
@@ -120,10 +121,10 @@ public class ProxiedConnection {
 
     public void killConnection() {
         try {
-            this.packetReplierTask.interrupt();
             if (!this.getSocket().isClosed()) this.getSocket().close();
             if (this.subServerActiveConnection != null && !this.subServerActiveConnection.isClosed()) this.subServerActiveConnection.close();
             this.proxy.getProxiedPlayers().remove(this.catProxiedPlayer.getUsername());
+            this.isStillConnected = false;
         } catch (IOException e) {
             proxy.getLogger().log(LogLevel.ERROR, e.getMessage());
             e.printStackTrace();
