@@ -203,7 +203,6 @@ public class WatchCatProxy extends ProxyServer implements Runnable {
                             null, false);
                     catProxiedPlayer.proxiedConnection.runPacketsReplier(this.getServers().get(this.defaultServerName));
                     this.proxiedPlayers.put(initialHandler.getLoginResult().username(), catProxiedPlayer);
-                    this.getLogger().log(LogLevel.ERROR, "Login request received.");
                 }
 
             } catch (ReadExploitException e) { // Fix exploit

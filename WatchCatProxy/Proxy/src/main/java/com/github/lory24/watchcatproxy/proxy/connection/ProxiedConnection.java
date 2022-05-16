@@ -58,7 +58,7 @@ public class ProxiedConnection {
             try {
                 this.socket.setTcpNoDelay(true);
                 while (isStillConnected) {
-                    //if (subServerActiveConnection.isClosed()) break;
+
                 }
                 this.killConnection();
                 subServerActiveConnection.close();
