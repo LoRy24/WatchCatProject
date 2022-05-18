@@ -1,16 +1,15 @@
 package com.github.lory24.watchcatproxy.proxy.connection;
 
 import com.github.lory24.watchcatproxy.api.logging.LogLevel;
-import com.github.lory24.watchcatproxy.protocol.BufferTypeException;
-import com.github.lory24.watchcatproxy.protocol.EncryptionUtil;
-import com.github.lory24.watchcatproxy.protocol.PacketBuffer;
-import com.github.lory24.watchcatproxy.protocol.VarInt;
+import com.github.lory24.watchcatproxy.protocol.*;
 import com.github.lory24.watchcatproxy.protocol.packets.Packet;
 import com.github.lory24.watchcatproxy.proxy.WatchCatProxy;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
@@ -19,6 +18,8 @@ public class ProxiedConnection {
 
     @Getter
     private final Socket socket;
+    private final DataInputStream clientDataInputStream;
+    private final DataOutputStream clientDataOutputStream;
     private boolean isStillConnected = true;
 
     private final CatProxiedPlayer catProxiedPlayer;
@@ -40,47 +41,53 @@ public class ProxiedConnection {
     @Getter @Setter
     private Socket subServerActiveConnection;
 
-    public ProxiedConnection(Socket socket, CatProxiedPlayer catProxiedPlayer, WatchCatProxy proxy, boolean onlineMode, EncryptionUtil encryptionUtil, boolean enableCompression) {
+    public ProxiedConnection(@NotNull Socket socket, CatProxiedPlayer catProxiedPlayer, WatchCatProxy proxy, boolean onlineMode, EncryptionUtil encryptionUtil,
+                             boolean enableCompression) throws IOException {
         this.socket = socket;
         this.catProxiedPlayer = catProxiedPlayer;
         this.proxy = proxy;
         this.onlineMode = onlineMode;
         this.encryptionUtil = encryptionUtil;
         this.enableCompression = enableCompression;
+        this.clientDataInputStream = new DataInputStream(socket.getInputStream());
+        this.clientDataOutputStream = new DataOutputStream(socket.getOutputStream());
     }
 
     public void runPacketsReplier(SubServerInfo defaultServer) throws IOException, BufferTypeException {
         this.setConnectedServer(defaultServer);
         this.catProxiedPlayer.connect(this.connectedServer);
-        if (!isStillConnected) return;
-        startConnectedCheckThread();
         this.packetReplierTask = new Thread(() -> {
-            try {
-                this.socket.setTcpNoDelay(true);
-                while (isStillConnected) {
+            while (isStillConnected) {
 
+                /*
+                 * Reply the packet received from the client.
+                 * CLIENT -> PROXY -> SERVER
+                 */
+                PacketBuffer receivedPacketFromClient = readClientIncomingPacketBuffer();
+                // If the received buffer is null, close the connection
+                if (receivedPacketFromClient == null) {
+                    this.isStillConnected = false;
+                    break;
                 }
-                this.killConnection();
-                subServerActiveConnection.close();
-                this.proxy.getLogger().log(LogLevel.INFO, "[Proxy Alert -> " + socket.getInetAddress().getHostAddress() + ":" + socket.getPort()+ "] User " + catProxiedPlayer.getUsername()
-                        + " has disconnected from the proxy.");
-                this.proxy.getProxiedPlayers().remove(this.catProxiedPlayer.getUsername());
-                Thread.currentThread().interrupt();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+                this.sendPacketDataToSubServer(receivedPacketFromClient);
             }
+            this.killConnection();
+            this.proxy.getLogger().log(LogLevel.INFO, "[Proxy Alert -> " + socket.getInetAddress().getHostAddress() + ":" + socket.getPort()+ "] User " + catProxiedPlayer.getUsername()
+                    + " has disconnected from the proxy.");
+            this.proxy.getProxiedPlayers().remove(this.catProxiedPlayer.getUsername());
+            Thread.currentThread().interrupt();
         });
         this.packetReplierTask.start();
     }
 
-    public void startConnectedCheckThread() {
-        while (isStillConnected) {
-            try {
-                if (socket.getInputStream().read() == -1) {
-                    this.isStillConnected = false;
-                    break;
-                }
-            } catch (IOException e) { e.printStackTrace(); }
+    @Nullable
+    private PacketBuffer readClientIncomingPacketBuffer() {
+        try {
+            VarInt packetLength = VarIntUtil.readVarInt(this.clientDataInputStream);
+            if (packetLength.intValue() == -1) return null;
+            return new PacketBuffer(this.clientDataInputStream.readNBytes(packetLength.intValue()));
+        } catch (IOException | BufferTypeException e) {
+            return null;
         }
     }
 
@@ -100,7 +107,7 @@ public class ProxiedConnection {
         PacketBuffer finalBuffer = createNewBuffer(buffer);
         if (onlineMode) {
 
-        } else sendBuffer(finalBuffer, new DataOutputStream(this.socket.getOutputStream()));
+        } else sendBuffer(finalBuffer, this.clientDataOutputStream);
     }
 
     private void sendBuffer(@NotNull PacketBuffer buffer, @NotNull DataOutputStream dataOutputStream) throws IOException {

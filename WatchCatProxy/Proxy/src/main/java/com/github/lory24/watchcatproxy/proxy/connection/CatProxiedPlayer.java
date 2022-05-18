@@ -28,7 +28,8 @@ public class CatProxiedPlayer extends ProxiedPlayer {
                             Socket socket,
                             WatchCatProxy proxy,
                             EncryptionUtil encryptionUtil,
-                            boolean compressionEnabled) {
+                            boolean compressionEnabled)
+            throws IOException {
         this.username = username;
         this.uuid = uuid;
         this.isInOnlineMode = isInOnlineMode;
