@@ -72,6 +72,10 @@ public class InitialHandler {
 
 
             case LOGIN -> {
+                if (this.handshakeResult.protocolVersion() != 47) {
+                    this.disconnectLogin("§cThe proxy accepts only 1.8 connections!");
+                    break;
+                }
                 processLogin();
                 break;
             }

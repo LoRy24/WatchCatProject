@@ -25,7 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
-@SuppressWarnings("FieldCanBeLocal")
+@SuppressWarnings({"FieldCanBeLocal", "SpellCheckingInspection"})
 public class WatchCatProxy extends ProxyServer implements Runnable {
 
     // Server properties file
@@ -46,7 +46,6 @@ public class WatchCatProxy extends ProxyServer implements Runnable {
 
     // Internal server features
     private ServerSocket serverSocket;
-    private LoggerPrintStream loggerPrintStream;
 
     // Server Objects
     private Logger logger;
@@ -86,10 +85,10 @@ public class WatchCatProxy extends ProxyServer implements Runnable {
             this.scheduler = new CatScheduler();
 
             // Load the logger and replace system defaults
-            this.loggerPrintStream = new LoggerPrintStream(System.out);
-            logger = new Logger(Logger.generateLoggerLogFile(), "WatchCat", this.loggerPrintStream);
+            LoggerPrintStream loggerPrintStream = new LoggerPrintStream(System.out);
+            logger = new Logger(Logger.generateLoggerLogFile(), "WatchCat", loggerPrintStream);
             this.scheduler.runAsyncRepeat(null, () -> this.logger.saveLogger(), 60); // Save the logger every 60 ticks (3s)
-            System.setErr(this.loggerPrintStream);
+            System.setErr(loggerPrintStream);
             getLogger().log(LogLevel.INFO, "Logger enabled!");
 
             // Load server properties
@@ -200,7 +199,7 @@ public class WatchCatProxy extends ProxyServer implements Runnable {
                 if (initialHandler.getState().equals(InitializationState.LOGIN)) {
                     // Encryption and compression are disabled
                     CatProxiedPlayer catProxiedPlayer = new CatProxiedPlayer(initialHandler.getLoginResult().username(), initialHandler.getLoginResult().uuid(), initialHandler.getLoginResult().onlineMode(), conn, this,
-                            null, false);
+                            null, false, initialHandler.getHandshakeResult());
                     catProxiedPlayer.proxiedConnection.runPacketsReplier(this.getServers().get(this.defaultServerName));
                     this.proxiedPlayers.put(initialHandler.getLoginResult().username(), catProxiedPlayer);
                 }
