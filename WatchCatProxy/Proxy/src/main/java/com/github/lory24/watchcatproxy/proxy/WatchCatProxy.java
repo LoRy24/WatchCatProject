@@ -25,7 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
-@SuppressWarnings({"FieldCanBeLocal", "SpellCheckingInspection"})
+@SuppressWarnings("FieldCanBeLocal")
 public class WatchCatProxy extends ProxyServer implements Runnable {
 
     // Server properties file

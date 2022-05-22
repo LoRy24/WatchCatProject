@@ -35,5 +35,5 @@ public abstract class ProxiedPlayer {
     /**
      * Send a message (TextChatComponent) to the player
      */
-    public abstract void sendMessage(TextChatComponent message) throws IOException, BufferTypeException;
+    public abstract void sendMessage(TextChatComponent message) throws IOException;
 }
