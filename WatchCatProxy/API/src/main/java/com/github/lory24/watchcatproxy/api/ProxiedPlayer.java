@@ -1,5 +1,7 @@
 package com.github.lory24.watchcatproxy.api;
 
+import com.github.lory24.watchcatproxy.api.chatcomponent.TextChatComponent;
+
 import java.io.IOException;
 import java.util.UUID;
 
@@ -24,4 +26,14 @@ public abstract class ProxiedPlayer {
      * This function will disconnect a player from the server with a reason
      */
     public abstract void disconnect(String reason) throws Exception;
+
+    /**
+     * Send a message (String) to the player
+     */
+    public abstract void sendMessage(String message) throws IOException;
+
+    /**
+     * Send a message (TextChatComponent) to the player
+     */
+    public abstract void sendMessage(TextChatComponent message) throws IOException, BufferTypeException;
 }
