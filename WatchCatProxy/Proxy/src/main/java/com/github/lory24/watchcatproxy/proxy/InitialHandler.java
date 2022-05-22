@@ -62,7 +62,7 @@ public class InitialHandler {
         }
 
         // Process the result
-        switch (handshakeResult.getNextState()) {
+        switch (handshakeResult.nextState()) {
 
             case STATUS -> {
                 processStatus();
