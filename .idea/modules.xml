@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/MinecraftSecurity.iml" filepath="$PROJECT_DIR$/MinecraftSecurity.iml" />
+      <module fileurl="file://$PROJECT_DIR$/WatchCatProject.iml" filepath="$PROJECT_DIR$/WatchCatProject.iml" />
     </modules>
   </component>
 </project>
