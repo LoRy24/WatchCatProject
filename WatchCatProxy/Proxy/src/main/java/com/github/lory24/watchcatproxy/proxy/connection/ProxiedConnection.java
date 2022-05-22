@@ -41,6 +41,8 @@ public class ProxiedConnection {
     @Getter @Setter
     private Socket subServerActiveConnection;
 
+    protected boolean connectedToAnyServer = false;
+
     public ProxiedConnection(@NotNull Socket socket, CatProxiedPlayer catProxiedPlayer, WatchCatProxy proxy, boolean onlineMode, EncryptionUtil encryptionUtil,
                              boolean enableCompression) throws IOException {
         this.socket = socket;
