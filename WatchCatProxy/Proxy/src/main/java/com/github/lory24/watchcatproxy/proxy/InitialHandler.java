@@ -29,8 +29,8 @@ public class InitialHandler {
 
     // Private values
     private final Socket socket;
-    @SuppressWarnings({"FieldCanBeLocal", "unused"})
     private final DataOutputStream dataOutputStream;
+    private final DataInputStream dataInputStream;
 
     // Disconnection values
     @Getter
@@ -49,6 +49,7 @@ public class InitialHandler {
     public InitialHandler(@NotNull Socket socket, WatchCatProxy proxy) throws IOException {
         this.socket = socket;
         this.dataOutputStream = new DataOutputStream(socket.getOutputStream());
+        this.dataInputStream = new DataInputStream(socket.getInputStream());
         this.proxy = proxy;
     }
 
@@ -250,7 +251,6 @@ public class InitialHandler {
      * @return The packet's data
      */
     public PacketBuffer secureReadPacketBuffer() throws IOException, BufferTypeException {
-        DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
         VarInt length = VarIntUtil.readVarInt(dataInputStream);
         if (length.intValue() <= 0) return null;
         return new PacketBuffer(dataInputStream.readNBytes(length.intValue()));
